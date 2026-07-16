@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb — Employees</title>
+<style>
+  :root{--navy:#1a2b6b;--navy-d:#142156;--gold:#C8941F;--gold-l:#E0A823;--cream:#FBF7EC;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  .wrap{max-width:900px;margin:0 auto}
+  header.app{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  header.app h1{font-size:17px;font-weight:700;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:40px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-gold{background:var(--gold);color:#fff}
+  .btn-ghost{background:#eef0f5;color:var(--navy)}
+  .btn-bad{background:var(--bad);color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  input,select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--navy);background:#fff}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+  .field{margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .search{margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;padding:6px 6px;border-bottom:2px solid var(--line)}
+  td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .name-ar{direction:rtl;color:var(--muted);font-size:11px;display:block}
+  .badge{font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700}
+  .badge.active{background:var(--ok-bg);color:var(--ok)}
+  .badge.inactive{background:#e5e9f2;color:var(--muted)}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:20px;z-index:50;overflow:auto}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:16px;max-width:420px;width:100%;margin-top:20px}
+  .modal h3{margin:0 0 12px;font-size:15px;color:var(--navy)}
+  .modal-actions{display:flex;gap:8px;margin-top:12px}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px}
+  .count-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--muted)}
+  .count-row b{color:var(--navy)}
+  #sheetHost{position:fixed;left:-99999px;top:0;width:800px}
+  .rsheet{background:#fff;padding:24px;font-family:Arial,sans-serif;color:#222}
+  .rsheet table{width:100%;border-collapse:collapse;font-size:12px}
+  .rsheet th{background:#eef0f5;text-align:left;padding:6px 8px;border:1px solid #ccc}
+  .rsheet td{padding:6px 8px;border:1px solid #ccc}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+      <h1>Employees — الموظفون</h1>
+      <div class="sub">Nabd Al-Gharb Trading Est. · master list for salary &amp; advance slips</div></div>
+    <div class="row-actions">
+      <button class="btn btn-gold" id="btnAdd">+ Add Employee</button>
+    </div>
+  </header>
+
+  <div class="count-row">
+    <span>Total employees: <b id="cTotal">0</b></span>
+    <span>Active: <b id="cActive">0</b></span>
+    <span>Total basic salary: <b id="cSalary">0</b> SAR</span>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" id="btnPdf" style="flex:1;min-width:120px">📄 Generate PDF</button>
+      <button class="btn btn-ghost" id="btnPrint" style="flex:1;min-width:120px">🖨️ Print</button>
+    </div>
+  </div>
+
+  <div class="search">
+    <input id="search" type="text" placeholder="Search by code or name…">
+  </div>
+
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th>Designation</th>
+            <th class="num">Basic Salary</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">No employees yet. Tap "+ Add Employee" to start.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">Add Employee</h3>
+    <div class="field"><label>Employee Code / ID (e.g. 003)</label><input id="f_code"></div>
+    <div class="field"><label>Name (English)</label><input id="f_en"></div>
+    <div class="field"><label>Name (Arabic)</label><input id="f_ar" style="direction:rtl"></div>
+    <div class="grid2">
+      <div class="field"><label>Designation</label><input id="f_desig"></div>
+      <div class="field"><label>Basic Salary (SAR)</label><input id="f_salary" type="number" step="0.01" inputmode="decimal"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Phone (optional)</label><input id="f_phone"></div>
+      <div class="field"><label>Status</label><select id="f_status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-navy" id="btnSave" style="flex:1">Save</button>
+      <button class="btn btn-ghost" id="btnCancel" style="flex:1">Cancel</button>
+      <button class="btn btn-bad" id="btnDelete" style="display:none">Delete</button>
+    </div>
+  </div>
+</div>
+<div id="sheetHost"></div>
+
+<script>
+  function $(id){return document.getElementById(id);}
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg;s.className=cls||'';}
+  function fmt(n){return (Math.round((n||0)*100)/100).toFixed(2);}
+
+  var SUPABASE_URL="https://vqtlibpsdxyvophzzkrx.supabase.co";
+  var SUPABASE_KEY="sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_";
+  var sb=null, ready=false;
+  var employees=[];
+  var editingId=null;
+
+  function initCloud(){
+    try{
+      if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Offline — connect to internet to load employees.','err');return;}
+      sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      ready=true;
+      loadEmployees();
+      sb.channel('employees-changes').on('postgres_changes',{event:'*',schema:'public',table:'nag_employees'},function(){loadEmployees();}).subscribe();
+    }catch(e){setStatus('Offline — connect to internet to load employees.','err');}
+  }
+
+  function loadEmployees(){
+    if(!ready)return;
+    setStatus('Syncing…','warn');
+    sb.from('nag_employees').select('*').order('emp_code',{ascending:true}).then(function(res){
+      if(res.error){setStatus('Could not load employees: '+res.error.message,'err');return;}
+      employees=res.data||[];
+      setStatus('','');
+      render();
+    });
+  }
+
+  function render(){
+    var q=($('search').value||'').trim().toLowerCase();
+    var list=employees.filter(function(e){
+      return !q || (e.emp_code||'').toLowerCase().indexOf(q)!==-1 || (e.name_en||'').toLowerCase().indexOf(q)!==-1 || (e.name_ar||'').indexOf(q)!==-1;
+    });
+    $('tbody').innerHTML=list.map(function(e){
+      return '<tr data-id="'+e.id+'">'+
+        '<td>'+(e.emp_code||'')+'</td>'+
+        '<td>'+(e.name_en||'')+(e.name_ar?'<span class="name-ar">'+e.name_ar+'</span>':'')+(e.phone?'<span class="name-ar" style="direction:ltr">'+e.phone+'</span>':'')+'</td>'+
+        '<td>'+(e.designation||'')+'</td>'+
+        '<td class="num">'+fmt(e.basic_salary)+'</td>'+
+        '<td><span class="badge '+((e.status||'active')==='active'?'active':'inactive')+'">'+((e.status||'active')==='active'?'ACTIVE':'INACTIVE')+'</span></td>'+
+        '<td><button class="icon-btn" data-edit="'+e.id+'">✏️</button></td>'+
+        '</tr>';
+    }).join('');
+    $('empty').style.display=list.length?'none':'block';
+    Array.prototype.forEach.call($('tbody').querySelectorAll('[data-edit]'),function(b){
+      b.onclick=function(){openEdit(b.getAttribute('data-edit'));};
+    });
+    $('cTotal').textContent=employees.length;
+    $('cActive').textContent=employees.filter(function(e){return (e.status||'active')==='active';}).length;
+    $('cSalary').textContent=fmt(employees.reduce(function(s,e){return s+(Number(e.basic_salary)||0);},0));
+  }
+
+  function openAdd(){
+    editingId=null;
+    $('modalTitle').textContent='Add Employee';
+    $('f_code').value='';$('f_en').value='';$('f_ar').value='';$('f_desig').value='';$('f_salary').value='';$('f_phone').value='';$('f_status').value='active';
+    $('btnDelete').style.display='none';
+    $('modal').classList.add('show');
+  }
+  function openEdit(id){
+    var e=employees.find(function(x){return String(x.id)===String(id);});
+    if(!e)return;
+    editingId=e.id;
+    $('modalTitle').textContent='Edit Employee';
+    $('f_code').value=e.emp_code||'';$('f_en').value=e.name_en||'';$('f_ar').value=e.name_ar||'';$('f_desig').value=e.designation||'';
+    $('f_salary').value=e.basic_salary!=null?e.basic_salary:'';$('f_phone').value=e.phone||'';$('f_status').value=e.status||'active';
+    $('btnDelete').style.display='';
+    $('modal').classList.add('show');
+  }
+  function closeModal(){$('modal').classList.remove('show');}
+
+  function saveEmployee(){
+    var code=$('f_code').value.trim();
+    if(!code){alert('Employee code is required.');return;}
+    var row={
+      emp_code:code,
+      name_en:$('f_en').value.trim(),
+      name_ar:$('f_ar').value.trim(),
+      designation:$('f_desig').value.trim(),
+      basic_salary:parseFloat($('f_salary').value)||0,
+      phone:$('f_phone').value.trim(),
+      status:$('f_status').value||'active',
+      updated_at:new Date().toISOString()
+    };
+    if(editingId)row.id=editingId;
+    if(!ready){setStatus('No internet connection right now.','err');return;}
+    sb.from('nag_employees').upsert(row,{onConflict:'emp_code'}).then(function(res){
+      if(res.error){setStatus('Save failed: '+res.error.message,'err');return;}
+      closeModal();loadEmployees();setStatus('Employee saved.','ok');
+    });
+  }
+  function deleteEmployee(){
+    if(!editingId)return;
+    if(!confirm('Delete this employee? Their salary/advance history stays but the employee will be removed from the list.'))return;
+    sb.from('nag_employees').delete().eq('id',editingId).then(function(res){
+      if(res.error){setStatus('Delete failed: '+res.error.message,'err');return;}
+      closeModal();loadEmployees();setStatus('Employee deleted.','ok');
+    });
+  }
+
+  /* ---- PDF / Print ---- */
+  var COMPANY_HEADER='<div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #1a2b6b;font-size:11px;line-height:1.6">'+
+    '<div><b style="font-size:14px">NABD AL-GHARB TRADING EST.</b><br>P.O. Box No. 37, North Zone, Turaif, Saudi Arabia<br>VAT No: 311157282200003<br>CR: 3451102031 &nbsp; Tel: 0537859509</div>'+
+    '<div style="text-align:right;direction:rtl"><b style="font-size:14px">مؤسسة نبض الغرب التجارية</b><br>ص.ب 37 المنطقة الشمالية، طريف، المملكة العربية السعودية<br>الرقم الضريبي: 311157282200003<br>السجل التجاري: 3451102031 &nbsp; هاتف: 0537859509</div>'+
+    '</div>';
+
+  function buildSheet(){
+    var rows=employees.map(function(e){
+      return '<tr><td>'+(e.emp_code||'')+'</td><td>'+(e.name_en||'')+'</td><td>'+(e.designation||'')+'</td><td style="text-align:right">'+fmt(e.basic_salary)+'</td><td>'+((e.status||'active')==='active'?'Active':'Inactive')+'</td></tr>';
+    }).join('');
+    var total=employees.reduce(function(s,e){return s+(Number(e.basic_salary)||0);},0);
+    return '<div class="rsheet">'+COMPANY_HEADER+
+      '<div style="font-size:12px;color:#666;margin-bottom:14px">Employee List · Generated '+new Date().toLocaleString()+'</div>'+
+      '<table><thead><tr><th>Code</th><th>Name</th><th>Designation</th><th>Basic Salary</th><th>Status</th></tr></thead>'+
+      '<tbody>'+(rows||'<tr><td colspan="5" style="text-align:center;color:#888">No employees.</td></tr>')+'</tbody>'+
+      '<tfoot><tr><td colspan="3" style="font-weight:800">TOTAL</td><td style="text-align:right;font-weight:800">'+fmt(total)+'</td><td></td></tr></tfoot>'+
+      '</table></div>';
+  }
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var libsReady=false;
+  // The app shell (parent) already bundles jspdf + html2canvas offline in web/vendor.
+  // Borrow them directly so PDF works inside the APK with NO internet needed.
+  function borrowFromParent(){
+    try{
+      var p=window.parent;
+      if(p&&p!==window){
+        if(!window.jspdf&&p.jspdf)window.jspdf=p.jspdf;
+        if(!window.html2canvas&&p.html2canvas)window.html2canvas=p.html2canvas;
+      }
+    }catch(e){}
+  }
+  function haveLibs(){return !!(window.jspdf&&window.jspdf.jsPDF&&window.html2canvas);}
+  function parentBase(){try{var u=window.parent.location.href;return u.replace(/[^/]*$/,'');}catch(e){return '';}}
+  function ensureLibs(){
+    borrowFromParent();
+    if(libsReady||haveLibs()){libsReady=true;return Promise.resolve();}
+    setStatus('Loading PDF engine…','warn');
+    var base=parentBase();
+    var jspdfSrc=base?base+'vendor/jspdf.umd.min.js':'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    var h2cSrc=base?base+'vendor/html2canvas.min.js':'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    var p=Promise.resolve();
+    if(!(window.jspdf&&window.jspdf.jsPDF))p=p.then(function(){return loadScript(jspdfSrc).catch(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');});});
+    if(!window.html2canvas)p=p.then(function(){return loadScript(h2cSrc).catch(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');});});
+    return p.then(function(){borrowFromParent();libsReady=haveLibs();setStatus('','');});
+  }
+  function buildPdf(){
+    return ensureLibs().then(function(){
+      var host=$('sheetHost');host.innerHTML=buildSheet();
+      return new Promise(function(r){setTimeout(r,250);}).then(function(){
+        var target=host.firstChild;target.style.background='#fff';
+        return html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:true}).then(function(canvas){
+          var img=canvas.toDataURL('image/jpeg',0.92);var jsPDF=window.jspdf.jsPDF;var pdf=new jsPDF({unit:'pt',format:'a4'});
+          var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+          var iw=pw,ih=canvas.height*(pw/canvas.width);
+          if(ih<=ph){pdf.addImage(img,'JPEG',0,0,iw,ih);}else{var pos=0;while(pos<ih){pdf.addImage(img,'JPEG',0,-pos,iw,ih);pos+=ph;if(pos<ih)pdf.addPage();}}
+          var printHtml=target.outerHTML;host.innerHTML='';
+          return {pdf:pdf,html:printHtml,filename:'Employees-'+new Date().toISOString().slice(0,10)+'.pdf'};
+        });
+      });
+    });
+  }
+
+
+  function desktopPrintHtml(html,title){
+    var old=document.getElementById('nagDesktopModulePrintFrameV157');if(old)old.remove();
+    var f=document.createElement('iframe');f.id='nagDesktopModulePrintFrameV157';f.style.cssText='position:fixed;left:-20000px;top:0;width:900px;height:1200px;border:0;background:#fff';document.body.appendChild(f);
+    var d=f.contentWindow.document;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+String(title||'Print')+'</title><style>@page{size:A4;margin:10mm}html,body{margin:0;background:#fff}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}*{box-sizing:border-box}</style></head><body>'+html+'</body></html>');d.close();
+    setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){}setTimeout(function(){try{f.remove()}catch(e){}},3000)},350);
+  }
+
+
+  function desktopPrintPdfExact(pdf,title){
+    var old=document.getElementById('nagDesktopExactPdfPrintFrameV158');if(old)old.remove();
+    var url=pdf.output('bloburl');
+    var f=document.createElement('iframe');f.id='nagDesktopExactPdfPrintFrameV158';
+    f.style.cssText='position:fixed;left:-20000px;top:0;width:900px;height:1200px;border:0;background:#fff';
+    f.src=url;document.body.appendChild(f);
+    var done=false;
+    function go(){if(done)return;done=true;try{f.contentWindow.focus();f.contentWindow.print();}catch(e){try{window.open(url,'_blank');}catch(_e){}}
+      setTimeout(function(){try{URL.revokeObjectURL(url)}catch(e){}try{f.remove()}catch(e){}},10000);
+    }
+    f.onload=function(){setTimeout(go,700)};setTimeout(go,1800);
+  }
+
+  function sendPdfToApp(res,action,moduleName,successMsg){
+    try{
+      if(action==='print'){
+        desktopPrintPdfExact(res.pdf,moduleName);
+      }else{
+        res.pdf.save(res.filename);
+      }
+      setStatus(successMsg,'ok');return true;
+    }catch(e){setStatus('PDF action failed: '+(e&&e.message?e.message:e),'err');return false;}
+  }
+
+  $('btnPdf').onclick=function(){
+    setStatus('Creating employee PDF…','warn');
+    buildPdf().then(function(res){
+      sendPdfToApp(res,'open','Employees','Employee list PDF ready.');
+    }).catch(function(err){setStatus('Could not create employee PDF: '+(err&&err.message?err.message:err),'err');});
+  };
+  $('btnPrint').onclick=function(){
+    setStatus('Preparing employee print…','warn');
+    buildPdf().then(function(res){
+      sendPdfToApp(res,'print','Employees','Employee list sent to print.');
+    }).catch(function(err){setStatus('Could not prepare employee print: '+(err&&err.message?err.message:err),'err');});
+  };
+
+  $('btnAdd').onclick=openAdd;
+  $('btnCancel').onclick=closeModal;
+  $('btnSave').onclick=saveEmployee;
+  $('btnDelete').onclick=deleteEmployee;
+  $('search').oninput=render;
+  $('homeLink').onclick=function(e){e.preventDefault();if(window.parent!==window){window.parent.postMessage('home','*');}else{location.href='index.html';}};
+
+  window.addEventListener('load',initCloud);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>
