@@ -1,6 +1,6 @@
 [package]
 name = "nabd-al-gharb"
-version = "1.0.0"
+version = "1.7.3"
 description = "Nabd Al-Gharb — Billing, Ledger & Inventory"
 authors = ["Nabd Al-Gharb Trading Est."]
 edition = "2021"
