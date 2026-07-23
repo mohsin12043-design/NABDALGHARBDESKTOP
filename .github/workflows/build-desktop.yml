@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,16 +21,18 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install npm dependencies
+        shell: pwsh
         run: |
-          if (Test-Path package-lock.json) { Remove-Item package-lock.json -Force }
-          if (Test-Path node_modules) { Remove-Item node_modules -Recurse -Force }
+          if (Test-Path "package-lock.json") { Remove-Item "package-lock.json" -Force }
+          if (Test-Path "node_modules") { Remove-Item "node_modules" -Recurse -Force }
           npm install
           npx tauri --version
-          - name: Build Tauri app
-          run: npm run tauri -- build
-          env:
-              TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-              TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Build Tauri app
+        run: npm run tauri -- build
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
