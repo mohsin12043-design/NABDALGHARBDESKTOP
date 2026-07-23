@@ -1,0 +1,24 @@
+NABD AL-GHARB FINAL RELEASE STATUS
+
+Validated in this package:
+1. Vehicle Stock, Mini Store and Stock Control modules are embedded.
+2. Vehicle and Mini Store storage/cloud-sync keys are present.
+3. Custom module inline JavaScript passes Node syntax validation.
+4. package.json, Tauri config and Cargo package versions match at 1.7.2.
+5. Required Tauri, PDF and frontend files are present.
+
+Not completed in this Linux workspace:
+1. Windows MSI/NSIS installer compilation, because Rust/Cargo and Windows build tools are unavailable here.
+2. Real Supabase multi-device transaction testing with production accounts and business data.
+3. Production auto-update test, because the GitHub release endpoint and Tauri updater public key are still placeholders.
+4. Saudi ZATCA legal/accounting approval of the Vehicle Bill document type.
+
+Before production release:
+1. Replace updater placeholders in src-tauri/tauri.conf.json.
+2. Build on the configured Windows/GitHub Actions release workflow.
+3. Install over a backed-up copy of the current software.
+4. Test one real Vehicle transfer/sale/return and one Mini Store transfer/sale/return.
+5. Confirm invoice type and VAT treatment with the business accountant.
+
+Run this command before every release:
+python RUN_FINAL_CHECKS.py

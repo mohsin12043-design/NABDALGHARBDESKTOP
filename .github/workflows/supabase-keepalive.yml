@@ -1,0 +1,22 @@
+name: Supabase Keep-Alive
+
+# Pings the Nabd Al-Gharb Supabase project every 3 days so the free-tier
+# project never hits Supabase's 7-day inactivity auto-pause.
+# Uses the same public "anon/publishable" key that is already embedded
+# in the app itself, so no GitHub Secret is required.
+
+on:
+  schedule:
+    - cron: '0 6 */3 * *'   # every 3 days at 06:00 UTC
+  workflow_dispatch:         # lets you also run it manually from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase (lightweight read query)
+        run: |
+          curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+            "https://vqtlibpsdxyvophzzkrx.supabase.co/rest/v1/products?select=id&limit=1" \
+            -H "apikey: sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_" \
+            -H "Authorization: Bearer sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_"
