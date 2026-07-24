@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb - Khurooj</title>
+<style>
+  :root{--navy:#1a2b6b;--gold:#C8941F;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea;--blue:#2457a6;--blue-bg:#e9f0ff}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  .wrap{max-width:1200px;margin:0 auto}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  header.app{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  header.app h1{font-size:19px;font-weight:750;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:650;cursor:pointer;font-family:inherit;min-height:40px}
+  .btn-navy{background:var(--navy);color:#fff}.btn-gold{background:var(--gold);color:#fff}.btn-ghost{background:#e7eaf3;color:var(--navy)}.btn-bad{background:var(--bad);color:#fff}.btn-ok{background:var(--ok);color:#fff}
+  .cards{display:grid;grid-template-columns:repeat(5,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}.stat .n{font-size:25px;font-weight:800;color:var(--navy)}.stat .t{font-size:11px;color:var(--muted);margin-top:2px}.stat.warn .n{color:var(--warn)}.stat.bad .n{color:var(--bad)}.stat.ok .n{color:var(--ok)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px}
+  input,select,textarea{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdff;color:var(--ink)}
+  textarea{min-height:72px;resize:vertical} input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);background:#fff}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}.field{margin-bottom:10px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .employee-box{background:#f7f8fc;border:1px dashed #bfc6d8;border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:var(--muted);display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.employee-box b{color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:1000px}th{text-align:left;color:var(--muted);font-size:10.5px;text-transform:uppercase;padding:7px 6px;border-bottom:2px solid var(--line)}td{padding:9px 6px;border-bottom:1px solid var(--line);vertical-align:middle}.num{text-align:right;font-variant-numeric:tabular-nums}.muted{font-size:10.5px;color:var(--muted);display:block}.empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px}
+  .badge{font-size:10px;padding:3px 7px;border-radius:10px;font-weight:750;white-space:nowrap}.badge.active{background:var(--blue-bg);color:var(--blue)}.badge.soon{background:var(--warn-bg);color:var(--warn)}.badge.overdue{background:var(--bad-bg);color:var(--bad)}.badge.returned{background:var(--ok-bg);color:var(--ok)}.badge.final{background:#eee;color:#555}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:15px;padding:4px 5px}.actions{white-space:nowrap}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);display:none;align-items:flex-start;justify-content:center;padding:18px;z-index:50;overflow:auto}.modal-overlay.show{display:flex}.modal{background:#fff;border-radius:12px;padding:16px;max-width:720px;width:100%;margin-top:12px}.modal h3{margin:0 0 12px;font-size:16px;color:var(--navy)}.modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .alerts{display:none}.alert-row{padding:8px 10px;border-left:4px solid var(--warn);background:#fff9ea;margin:6px 0;border-radius:6px;font-size:12px}.alert-row.bad{border-color:var(--bad);background:#fff0ef}.alert-row.ok{border-color:var(--ok);background:#effaf2}
+  @media(max-width:850px){.cards{grid-template-columns:repeat(2,1fr)}.filters,.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.employee-box{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+      <h1>Khurooj - خروج</h1>
+      <div class="sub">Employee exit, return date, overdue status and document expiry tracking</div></div>
+    <div class="row-actions"><button class="btn btn-gold" id="btnAdd">+ Add Khurooj</button><button class="btn btn-ghost" id="btnRefresh">Refresh</button></div>
+  </header>
+
+  <div class="cards">
+    <div class="stat"><div class="n" id="cActive">0</div><div class="t">Active Khurooj</div></div>
+    <div class="stat warn"><div class="n" id="cSoon">0</div><div class="t">Returning in 30 days</div></div>
+    <div class="stat bad"><div class="n" id="cOverdue">0</div><div class="t">Overdue</div></div>
+    <div class="stat ok"><div class="n" id="cReturned">0</div><div class="t">Returned</div></div>
+    <div class="stat warn"><div class="n" id="cDocs">0</div><div class="t">Documents expiring</div></div>
+  </div>
+
+  <div class="card alerts" id="alertsCard"><b style="color:var(--navy)">Reminders</b><div id="alerts"></div></div>
+
+  <div class="card"><div class="filters"><input id="search" placeholder="Search employee, code, iqama or passport"><select id="statusFilter"><option value="">All status</option><option value="active">Active</option><option value="soon">Returning soon</option><option value="overdue">Overdue</option><option value="returned">Returned</option></select><select id="typeFilter"><option value="">All exit types</option><option value="exit_reentry">Exit Re-entry</option><option value="final_exit">Final Exit</option><option value="business">Business Travel</option><option value="other">Other</option></select></div></div>
+
+  <div class="card"><div style="overflow-x:auto"><table><thead><tr><th>Employee</th><th>Iqama / Passport</th><th>Exit Type</th><th>Exit Date</th><th>Return Date</th><th>Days</th><th>Status</th><th>Visa Expiry</th><th></th></tr></thead><tbody id="tbody"></tbody></table><div id="empty" class="empty" style="display:none">No Khurooj records yet.</div></div></div>
+</div>
+
+<div class="modal-overlay" id="modal"><div class="modal">
+  <h3 id="modalTitle">Add Khurooj</h3>
+  <div class="field"><label>Employee</label><select id="f_employee"><option value="">Select employee</option></select></div>
+  <div class="employee-box" id="employeeBox"><span>Code: <b id="d_code">-</b></span><span>Department: <b id="d_department">-</b></span><span>Designation: <b id="d_designation">-</b></span><span>Iqama: <b id="d_iqama">-</b></span><span>Iqama Expiry: <b id="d_iqama_expiry">-</b></span><span>Passport: <b id="d_passport">-</b></span><span>Passport Expiry: <b id="d_passport_expiry">-</b></span></div>
+  <div class="grid3">
+    <div class="field"><label>Exit Type</label><select id="f_type"><option value="exit_reentry">Exit Re-entry</option><option value="final_exit">Final Exit</option><option value="business">Business Travel</option><option value="other">Other</option></select></div>
+    <div class="field"><label>Exit Date</label><input id="f_exit" type="date"></div>
+    <div class="field"><label>Return Date</label><input id="f_return" type="date"></div>
+  </div>
+  <div class="grid3">
+    <div class="field"><label>Exit Visa Expiry</label><input id="f_visa" type="date"></div>
+    <div class="field"><label>Return Airport (optional)</label><input id="f_airport" placeholder="Riyadh, Jeddah..."></div>
+    <div class="field"><label>Attachment URL (optional)</label><input id="f_attachment" placeholder="https://..."></div>
+  </div>
+  <div class="field"><label>Remarks</label><textarea id="f_remarks"></textarea></div>
+  <div class="field"><label>Returned Date (leave empty until employee returns)</label><input id="f_returned" type="date"></div>
+  <div class="modal-actions"><button class="btn btn-navy" id="btnSave" style="flex:1">Save</button><button class="btn btn-ok" id="btnMarkReturned" style="display:none">Mark Returned Today</button><button class="btn btn-ghost" id="btnCancel" style="flex:1">Cancel</button><button class="btn btn-bad" id="btnDelete" style="display:none">Delete</button></div>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  function $(id){return document.getElementById(id);} function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg||'';s.className=cls||'';}
+  var SUPABASE_URL='https://vqtlibpsdxyvophzzkrx.supabase.co';
+  var SUPABASE_KEY='sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_';
+  var sb=null,ready=false,employees=[],records=[],editingId=null;
+  function todayISO(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);}
+  function daysTo(date){if(!date)return null;var a=new Date(todayISO()+'T00:00:00'),b=new Date(date+'T00:00:00');return Math.round((b-a)/86400000);}
+  function employeeName(e){return (e&&((e.name_en||e.name||'').trim()))||'Unnamed Employee';}
+  function employeeCode(e){return (e&&(e.emp_code||e.employee_no||''))||'';}
+  function statusOf(r){if(r.returned_at)return 'returned';if((r.exit_type||'')==='final_exit')return 'final';var d=daysTo(r.return_date);if(d===null)return 'active';if(d<0)return 'overdue';if(d<=30)return 'soon';return 'active';}
+  function statusLabel(s){return {active:'ACTIVE',soon:'RETURNING SOON',overdue:'OVERDUE',returned:'RETURNED',final:'FINAL EXIT'}[s]||s.toUpperCase();}
+  function typeLabel(t){return {exit_reentry:'Exit Re-entry',final_exit:'Final Exit',business:'Business Travel',other:'Other'}[t]||t||'';}
+  function init(){try{if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Supabase library could not load. Check internet connection.','err');return;}sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);ready=true;loadAll();sb.channel('khurooj-live').on('postgres_changes',{event:'*',schema:'public',table:'nag_khurooj'},loadAll).on('postgres_changes',{event:'*',schema:'public',table:'nag_employees'},loadAll).subscribe();}catch(e){setStatus('Could not connect to Supabase.','err');}}
+  function loadAll(){if(!ready)return;setStatus('Syncing Khurooj data...','warn');Promise.all([sb.from('nag_employees').select('*').order('emp_code',{ascending:true}),sb.from('nag_khurooj').select('*').order('created_at',{ascending:false})]).then(function(all){var er=all[0],kr=all[1];if(er.error){setStatus('Employee table error: '+er.error.message+'. Run SUPABASE_KHUROOJ_MODULE.sql.','err');return;}if(kr.error){setStatus('Khurooj table error: '+kr.error.message+'. Run SUPABASE_KHUROOJ_MODULE.sql.','err');return;}employees=er.data||[];records=kr.data||[];populateEmployees();render();setStatus('','');}).catch(function(e){setStatus('Sync failed: '+e.message,'err');});}
+  function populateEmployees(){var current=$('f_employee').value;$('f_employee').innerHTML='<option value="">Select employee</option>'+employees.filter(function(e){return String(e.status||'active').toLowerCase()!=='inactive';}).map(function(e){return '<option value="'+esc(e.id)+'">'+esc(employeeCode(e)+' - '+employeeName(e))+'</option>';}).join('');if(current)$('f_employee').value=current;showEmployee();}
+  function employeeById(id){return employees.find(function(e){return String(e.id)===String(id);});}
+  function showEmployee(){var e=employeeById($('f_employee').value);$('d_code').textContent=e?employeeCode(e):'-';$('d_department').textContent=e?(e.department||'-'):'-';$('d_designation').textContent=e?(e.designation||e.job_title||'-'):'-';$('d_iqama').textContent=e?(e.iqama_no||e.id_number||'-'):'-';$('d_iqama_expiry').textContent=e?(e.iqama_expiry||'-'):'-';$('d_passport').textContent=e?(e.passport_no||'-'):'-';$('d_passport_expiry').textContent=e?(e.passport_expiry||'-'):'-';}
+  function render(){var q=$('search').value.trim().toLowerCase(),sf=$('statusFilter').value,tf=$('typeFilter').value;var list=records.filter(function(r){var e=employeeById(r.employee_id)||{};var hay=[r.employee_name,employeeName(e),r.employee_code,employeeCode(e),e.iqama_no,e.passport_no].join(' ').toLowerCase();return (!q||hay.indexOf(q)!==-1)&&(!sf||statusOf(r)===sf)&&(!tf||r.exit_type===tf);});$('tbody').innerHTML=list.map(function(r){var e=employeeById(r.employee_id)||{},s=statusOf(r),d=r.return_date?daysTo(r.return_date):null;var days=s==='returned'?'Done':(s==='final'?'N/A':(d===null?'-':(d<0?Math.abs(d)+' late':d+' left')));var attach=r.attachment_url?'<a href="'+esc(r.attachment_url)+'" target="_blank" title="Open attachment">📎</a> ':'';return '<tr><td><b>'+esc(r.employee_name||employeeName(e))+'</b><span class="muted">'+esc(r.employee_code||employeeCode(e))+' '+esc(e.department||'')+'</span></td><td>'+esc(e.iqama_no||e.id_number||'-')+'<span class="muted">Passport: '+esc(e.passport_no||'-')+'</span></td><td>'+esc(typeLabel(r.exit_type))+'</td><td>'+esc(r.exit_date||'-')+'</td><td>'+esc(r.return_date||'-')+'</td><td>'+esc(days)+'</td><td><span class="badge '+s+'">'+statusLabel(s)+'</span></td><td>'+esc(r.exit_visa_expiry||'-')+'</td><td class="actions">'+attach+'<button class="icon-btn" data-edit="'+esc(r.id)+'">✏️</button></td></tr>';}).join('');$('empty').style.display=list.length?'none':'block';Array.prototype.forEach.call(document.querySelectorAll('[data-edit]'),function(b){b.onclick=function(){openEdit(b.getAttribute('data-edit'));};});var sts=records.map(statusOf);$('cActive').textContent=sts.filter(function(s){return s==='active';}).length;$('cSoon').textContent=sts.filter(function(s){return s==='soon';}).length;$('cOverdue').textContent=sts.filter(function(s){return s==='overdue';}).length;$('cReturned').textContent=sts.filter(function(s){return s==='returned';}).length;renderAlerts();}
+  function expiringDocs(){var out=[];employees.forEach(function(e){[['Iqama',e.iqama_expiry],['Passport',e.passport_expiry]].forEach(function(x){var d=daysTo(x[1]);if(d!==null&&d<=30)out.push({name:employeeName(e),kind:x[0],date:x[1],days:d});});});return out;}
+  function renderAlerts(){var a=[];records.forEach(function(r){var s=statusOf(r),d=daysTo(r.return_date);if(s==='overdue')a.push({bad:true,text:(r.employee_name||'Employee')+' return date passed '+Math.abs(d)+' day(s) ago.'});else if(s==='soon')a.push({text:(r.employee_name||'Employee')+' must return in '+d+' day(s), by '+r.return_date+'.'});});var docs=expiringDocs();docs.forEach(function(x){a.push({bad:x.days<0,text:x.name+' '+x.kind+' '+(x.days<0?'expired '+Math.abs(x.days)+' day(s) ago':'expires in '+x.days+' day(s)')+' ('+x.date+').'});});$('cDocs').textContent=docs.length;$('alertsCard').style.display=a.length?'block':'none';$('alerts').innerHTML=a.slice(0,20).map(function(x){return '<div class="alert-row '+(x.bad?'bad':'')+'">'+esc(x.text)+'</div>';}).join('');}
+  function clearForm(){editingId=null;$('modalTitle').textContent='Add Khurooj';$('f_employee').value='';$('f_type').value='exit_reentry';$('f_exit').value=todayISO();$('f_return').value='';$('f_visa').value='';$('f_airport').value='';$('f_attachment').value='';$('f_remarks').value='';$('f_returned').value='';$('btnDelete').style.display='none';$('btnMarkReturned').style.display='none';showEmployee();}
+  function openAdd(){clearForm();$('modal').classList.add('show');}
+  function openEdit(id){var r=records.find(function(x){return String(x.id)===String(id);});if(!r)return;editingId=r.id;$('modalTitle').textContent='Edit Khurooj';$('f_employee').value=r.employee_id||'';$('f_type').value=r.exit_type||'exit_reentry';$('f_exit').value=r.exit_date||'';$('f_return').value=r.return_date||'';$('f_visa').value=r.exit_visa_expiry||'';$('f_airport').value=r.return_airport||'';$('f_attachment').value=r.attachment_url||'';$('f_remarks').value=r.remarks||'';$('f_returned').value=r.returned_at||'';$('btnDelete').style.display='';$('btnMarkReturned').style.display=r.returned_at?'none':'';showEmployee();$('modal').classList.add('show');}
+  function closeModal(){$('modal').classList.remove('show');}
+  function save(){var e=employeeById($('f_employee').value);if(!e){alert('Select an employee.');return;}if(!$('f_exit').value){alert('Exit date is required.');return;}if($('f_type').value!=='final_exit'&&!$('f_return').value){alert('Return date is required for this exit type.');return;}var session=null;try{session=window.parent&&window.parent.nagSession;}catch(_){session=null;}var row={employee_id:e.id,employee_code:employeeCode(e),employee_name:employeeName(e),exit_type:$('f_type').value,exit_date:$('f_exit').value,return_date:$('f_return').value||null,return_airport:$('f_airport').value.trim()||null,exit_visa_expiry:$('f_visa').value||null,attachment_url:$('f_attachment').value.trim()||null,remarks:$('f_remarks').value.trim()||null,returned_at:$('f_returned').value||null,status:$('f_returned').value?'returned':'active',created_by:session?(session.n||session.u||'admin'):'admin',updated_at:new Date().toISOString()};var q=editingId?sb.from('nag_khurooj').update(row).eq('id',editingId):sb.from('nag_khurooj').insert(row);q.then(function(res){if(res.error){setStatus('Save failed: '+res.error.message,'err');return;}closeModal();setStatus('Khurooj record saved.','ok');loadAll();});}
+  function remove(){if(!editingId||!confirm('Delete this Khurooj record?'))return;sb.from('nag_khurooj').delete().eq('id',editingId).then(function(res){if(res.error){setStatus('Delete failed: '+res.error.message,'err');return;}closeModal();setStatus('Khurooj record deleted.','ok');loadAll();});}
+  function markReturned(){if(!editingId)return;$('f_returned').value=todayISO();save();}
+  $('btnAdd').onclick=openAdd;$('btnRefresh').onclick=loadAll;$('btnCancel').onclick=closeModal;$('btnSave').onclick=save;$('btnDelete').onclick=remove;$('btnMarkReturned').onclick=markReturned;$('f_employee').onchange=showEmployee;$('search').oninput=render;$('statusFilter').onchange=render;$('typeFilter').onchange=render;$('homeLink').onclick=function(e){e.preventDefault();window.parent.postMessage('home','*');};$('modal').onclick=function(e){if(e.target===$('modal'))closeModal();};
+  init();
+</script>
+</body>
+</html>

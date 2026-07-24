@@ -60,7 +60,7 @@ for name,html in found.items():
 if not any('JavaScript syntax error' in x for x in errors): ok(f'Inline JavaScript syntax passed for {script_count} scripts')
 
 # Important storage/sync keys
-keys=['nag_vehicles_v1','nag_vehicle_prices_v1','nag_vehicle_sales_v1','nag_mini_stores_v1','nag_mini_store_inventory_v1','nag_mini_store_sales_v1','nag_mini_store_price_permissions_v1']
+keys=['nag_vehicles_v1','nag_vehicle_prices_v1','nag_vehicle_sales_v1','nag_mini_stores_v1','nag_mini_store_inventory_v1','nag_mini_store_sales_v1','nag_mini_store_price_permissions_v1','nag_testing_auto_create_items_v1','nag_allow_negative_stock_v1']
 for k in keys:
     if k not in index: err('Required data/sync key missing: '+k)
 if not any('data/sync key missing' in x for x in errors): ok('Vehicle and Mini Store data/sync keys present')

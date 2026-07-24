@@ -61,7 +61,7 @@
   <header class="app">
     <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
       <h1>Employees — الموظفون</h1>
-      <div class="sub">Nabd Al-Gharb Trading Est. · master list for salary &amp; advance slips</div></div>
+      <div class="sub">Nabd Al-Gharb Trading Est. · master list for salary, advance and Khurooj tracking</div></div>
     <div class="row-actions">
       <button class="btn btn-gold" id="btnAdd">+ Add Employee</button>
     </div>
@@ -91,7 +91,7 @@
           <tr>
             <th>Code</th>
             <th>Name</th>
-            <th>Designation</th>
+            <th>Designation / Department</th>
             <th class="num">Basic Salary</th>
             <th>Status</th>
             <th></th>
@@ -112,11 +112,23 @@
     <div class="field"><label>Name (Arabic)</label><input id="f_ar" style="direction:rtl"></div>
     <div class="grid2">
       <div class="field"><label>Designation</label><input id="f_desig"></div>
-      <div class="field"><label>Basic Salary (SAR)</label><input id="f_salary" type="number" step="0.01" inputmode="decimal"></div>
+      <div class="field"><label>Department</label><input id="f_department"></div>
     </div>
     <div class="grid2">
+      <div class="field"><label>Basic Salary (SAR)</label><input id="f_salary" type="number" step="0.01" inputmode="decimal"></div>
       <div class="field"><label>Phone (optional)</label><input id="f_phone"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Iqama Number</label><input id="f_iqama"></div>
+      <div class="field"><label>Iqama Expiry</label><input id="f_iqama_expiry" type="date"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Passport Number</label><input id="f_passport"></div>
+      <div class="field"><label>Passport Expiry</label><input id="f_passport_expiry" type="date"></div>
+    </div>
+    <div class="grid2">
       <div class="field"><label>Status</label><select id="f_status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+      <div></div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-navy" id="btnSave" style="flex:1">Save</button>
@@ -162,13 +174,13 @@
   function render(){
     var q=($('search').value||'').trim().toLowerCase();
     var list=employees.filter(function(e){
-      return !q || (e.emp_code||'').toLowerCase().indexOf(q)!==-1 || (e.name_en||'').toLowerCase().indexOf(q)!==-1 || (e.name_ar||'').indexOf(q)!==-1;
+      return !q || (e.emp_code||'').toLowerCase().indexOf(q)!==-1 || (e.name_en||'').toLowerCase().indexOf(q)!==-1 || (e.name_ar||'').indexOf(q)!==-1 || (e.department||'').toLowerCase().indexOf(q)!==-1 || (e.iqama_no||'').toLowerCase().indexOf(q)!==-1 || (e.passport_no||'').toLowerCase().indexOf(q)!==-1;
     });
     $('tbody').innerHTML=list.map(function(e){
       return '<tr data-id="'+e.id+'">'+
         '<td>'+(e.emp_code||'')+'</td>'+
-        '<td>'+(e.name_en||'')+(e.name_ar?'<span class="name-ar">'+e.name_ar+'</span>':'')+(e.phone?'<span class="name-ar" style="direction:ltr">'+e.phone+'</span>':'')+'</td>'+
-        '<td>'+(e.designation||'')+'</td>'+
+        '<td>'+(e.name_en||'')+(e.name_ar?'<span class="name-ar">'+e.name_ar+'</span>':'')+(e.phone?'<span class="name-ar" style="direction:ltr">'+e.phone+'</span>':'')+(e.iqama_no?'<span class="name-ar" style="direction:ltr">Iqama: '+e.iqama_no+'</span>':'')+(e.passport_no?'<span class="name-ar" style="direction:ltr">Passport: '+e.passport_no+'</span>':'')+'</td>'+
+        '<td>'+(e.designation||'')+(e.department?'<span class="name-ar" style="direction:ltr">'+e.department+'</span>':'')+'</td>'+
         '<td class="num">'+fmt(e.basic_salary)+'</td>'+
         '<td><span class="badge '+((e.status||'active')==='active'?'active':'inactive')+'">'+((e.status||'active')==='active'?'ACTIVE':'INACTIVE')+'</span></td>'+
         '<td><button class="icon-btn" data-edit="'+e.id+'">✏️</button></td>'+
@@ -186,7 +198,7 @@
   function openAdd(){
     editingId=null;
     $('modalTitle').textContent='Add Employee';
-    $('f_code').value='';$('f_en').value='';$('f_ar').value='';$('f_desig').value='';$('f_salary').value='';$('f_phone').value='';$('f_status').value='active';
+    $('f_code').value='';$('f_en').value='';$('f_ar').value='';$('f_desig').value='';$('f_department').value='';$('f_salary').value='';$('f_phone').value='';$('f_iqama').value='';$('f_iqama_expiry').value='';$('f_passport').value='';$('f_passport_expiry').value='';$('f_status').value='active';
     $('btnDelete').style.display='none';
     $('modal').classList.add('show');
   }
@@ -196,7 +208,7 @@
     editingId=e.id;
     $('modalTitle').textContent='Edit Employee';
     $('f_code').value=e.emp_code||'';$('f_en').value=e.name_en||'';$('f_ar').value=e.name_ar||'';$('f_desig').value=e.designation||'';
-    $('f_salary').value=e.basic_salary!=null?e.basic_salary:'';$('f_phone').value=e.phone||'';$('f_status').value=e.status||'active';
+    $('f_department').value=e.department||'';$('f_salary').value=e.basic_salary!=null?e.basic_salary:'';$('f_phone').value=e.phone||'';$('f_iqama').value=e.iqama_no||'';$('f_iqama_expiry').value=e.iqama_expiry||'';$('f_passport').value=e.passport_no||'';$('f_passport_expiry').value=e.passport_expiry||'';$('f_status').value=e.status||'active';
     $('btnDelete').style.display='';
     $('modal').classList.add('show');
   }
@@ -210,8 +222,13 @@
       name_en:$('f_en').value.trim(),
       name_ar:$('f_ar').value.trim(),
       designation:$('f_desig').value.trim(),
+      department:$('f_department').value.trim(),
       basic_salary:parseFloat($('f_salary').value)||0,
       phone:$('f_phone').value.trim(),
+      iqama_no:$('f_iqama').value.trim(),
+      iqama_expiry:$('f_iqama_expiry').value||null,
+      passport_no:$('f_passport').value.trim(),
+      passport_expiry:$('f_passport_expiry').value||null,
       status:$('f_status').value||'active',
       updated_at:new Date().toISOString()
     };
