@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb — Inventory</title>
+<style>
+  :root{--navy:#1a2b6b;--navy-d:#142156;--gold:#C8941F;--gold-l:#E0A823;--cream:#FBF7EC;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  .wrap{max-width:900px;margin:0 auto}
+  header.app{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  header.app h1{font-size:17px;font-weight:700;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:40px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-gold{background:var(--gold);color:#fff}
+  .btn-ghost{background:#eef0f5;color:var(--navy)}
+  .btn-bad{background:var(--bad);color:#fff}
+  .pill{font-size:11px;background:#fff;color:var(--navy);border-radius:20px;padding:2px 9px;font-weight:700}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  input,select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--navy);background:#fff}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+  .field{margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .search{margin-bottom:10px}
+  .filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .filters button{flex:1;min-width:100px}
+  .filters button.active{outline:2px solid var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;padding:6px 6px;border-bottom:2px solid var(--line)}
+  td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr.low td{background:var(--bad-bg)}
+  tr.warn td{background:var(--warn-bg)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .name-ar{direction:rtl;color:var(--muted);font-size:11px;display:block}
+  .badge{font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700}
+  .badge.low{background:var(--bad);color:#fff}
+  .badge.ok{background:#e5e9f2;color:var(--navy)}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:20px;z-index:50;overflow:auto}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:16px;max-width:420px;width:100%;margin-top:20px}
+  .modal h3{margin:0 0 12px;font-size:15px;color:var(--navy)}
+  .modal-actions{display:flex;gap:8px;margin-top:12px}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:13px}
+  .count-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--muted)}
+  .count-row b{color:var(--navy)}  #sheetHost{position:fixed;left:-9999px;top:0;width:800px}
+  .rsheet{background:#fff;padding:24px;font-family:Arial,sans-serif;color:#222}
+  .rsheet table{width:100%;border-collapse:collapse;font-size:12px}
+  .rsheet th{background:#eef0f5;text-align:left;padding:6px 8px;border:1px solid #ccc}
+  .rsheet td{padding:6px 8px;border:1px solid #ccc}
+  .rsheet tfoot td{font-weight:800;background:#f7f7f7}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.setting-row{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fafbfe}.setting-row input{width:auto;margin-top:2px}.setting-state{font-size:11px;border-radius:20px;padding:3px 9px;font-weight:700}.setting-on{background:var(--ok-bg);color:var(--ok)}.setting-off{background:var(--bad-bg);color:var(--bad)}@media(max-width:680px){.settings-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+      <h1>Inventory — إدارة المخزون</h1>
+      <div class="sub">Nabd Al-Gharb Trading Est. · cloud-synced across devices</div></div>
+    <div class="row-actions">
+      <button class="btn btn-gold" id="btnAdd">+ Add Product</button>
+    </div>
+  </header>
+
+  <div class="count-row">
+    <span>Total products: <b id="cTotal">0</b></span>
+    <span>Low stock: <b id="cLow">0</b></span>
+    <span id="costSummarySpan">Total stock value (cost): <b id="cValue">0</b> SAR</span>
+    <span>Total sale value (excl. VAT): <b id="cSaleValue">0</b> SAR</span>
+    <span>VAT (15%) on sale value: <b id="cVatValue">0</b> SAR</span>
+    <span>Total sale value (with VAT): <b id="cSaleValueWithVat">0</b> SAR</span>
+  </div>
+
+  <div class="card" id="testingStockSettings">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div><h2 style="font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:0;font-weight:700">Testing Stock Settings</h2><div style="font-size:11px;color:var(--muted);margin-top:4px">Keep these ON during testing. Turn Auto-Create OFF before entering final opening quantities.</div></div>
+      <span id="testingState" class="setting-state setting-on">TESTING ON</span>
+    </div>
+    <div class="settings-grid" style="margin-top:12px">
+      <label class="setting-row"><input id="testingAutoCreate" type="checkbox"><span><b>Auto-create missing items</b><br><span style="font-size:11px;color:var(--muted)">Mini Store or Vehicle Stock can create a typed missing item with quantity 0.</span></span></label>
+      <label class="setting-row"><input id="allowNegativeStock" type="checkbox"><span><b>Allow negative Main Warehouse stock</b><br><span style="font-size:11px;color:var(--muted)">Example: Warehouse 5, transfer 30, new Warehouse balance -25.</span></span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:0 0 10px;font-weight:700">Download / Print</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-gold" id="btnPdf" style="flex:1;min-width:120px">📄 Generate PDF</button>
+      <button class="btn btn-ghost" id="btnPrint" style="flex:1;min-width:120px">🖨️ Print</button>
+    </div>
+    <div id="inventoryDataTools" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <button class="btn btn-navy" id="btnExportExcel" style="flex:1;min-width:120px">📊 Export to Excel</button>
+      <button class="btn btn-ghost" id="btnImportExcel" style="flex:1;min-width:120px">⭱ Import from Excel</button>
+      <input id="excelFile" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+    </div>
+    <div id="inventoryImportHelp" style="font-size:11px;color:var(--muted);margin-top:6px">Import expects columns: Code, Name (EN), Name (AR), Retail Price, Wholesale Price, Vehicle Price, Qty, Reorder Level. Admin/cashiers with cost permission may also import Purchase Price. Existing codes are updated; new codes are added.</div>
+  </div>
+
+  <div class="search">
+    <input id="search" type="text" placeholder="Search by code or name…">
+  </div>
+
+  <div class="filters">
+    <button class="btn btn-ghost active" id="fAll">All</button>
+    <button class="btn btn-ghost" id="fLow">Low Stock Only</button>
+  </div>
+
+  <div class="card">
+    <div style="overflow-x:auto">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th class="num">Qty</th>
+            <th class="num cost-col">Purchase</th>
+            <th class="num retail-col">Retail</th>
+            <th class="num wholesale-col">Wholesale</th>
+            <th class="num vehicle-col">Vehicle Price</th>
+            <th class="num">VAT (15%)</th>
+            <th class="num">Sale + VAT</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">No products yet. Tap "+ Add Product" to start.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modalTitle">Add Product</h3>
+    <div class="field"><label>Product Code / SKU</label><input id="f_code"></div>
+    <div class="field"><label>Name (English)</label><input id="f_en"></div>
+    <div class="field"><label>Name (Arabic)</label><input id="f_ar" style="direction:rtl"></div>
+    <div class="grid2">
+      <div class="field cost-field"><label>Purchase Price (SAR)</label><input id="f_purchase" type="number" step="0.01" inputmode="decimal"></div>
+      <div class="field retail-field"><label>Retail Price (SAR)</label><input id="f_sale" type="number" step="0.01" inputmode="decimal"></div>
+      <div class="field wholesale-field"><label>Wholesale Price (SAR)</label><input id="f_wholesale" type="number" step="0.01" inputmode="decimal"></div>
+      <div class="field vehicle-field"><label>Vehicle Price (SAR)</label><input id="f_vehicle" type="number" step="0.01" inputmode="decimal"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Qty on Hand</label><input id="f_qty" type="number" step="1" inputmode="numeric"></div>
+      <div class="field"><label>Reorder Level (low-stock alert below this)</label><input id="f_reorder" type="number" step="1" inputmode="numeric"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-navy" id="btnSave" style="flex:1">Save</button>
+      <button class="btn btn-ghost" id="btnCancel" style="flex:1">Cancel</button>
+      <button class="btn btn-bad" id="btnDelete" style="display:none">Delete</button>
+    </div>
+  </div>
+</div>
+<div id="sheetHost"></div>
+
+<script>
+  function $(id){return document.getElementById(id);}
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg;s.className=cls||'';}
+
+  var SUPABASE_URL="https://vqtlibpsdxyvophzzkrx.supabase.co";
+  var SUPABASE_KEY="sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_";
+  var sb=null, ready=false;
+  var products=[];
+  var editingId=null;
+  var filterLowOnly=false;
+  var WPRICE_KEY='nag_product_wholesale_prices_v1',VPRICE_KEY='nag_vehicle_prices_v1';
+  var TEST_AUTO_KEY='nag_testing_auto_create_items_v1',NEGATIVE_KEY='nag_allow_negative_stock_v1';
+  function settingOn(key,defaultValue){var v=localStorage.getItem(key);if(v==null||v==='')return defaultValue;return v==='on'||v==='true'||v==='1';}
+  function saveSetting(key,on){localStorage.setItem(key,on?'on':'off');}
+  function renderTestingSettings(){var a=settingOn(TEST_AUTO_KEY,true),n=settingOn(NEGATIVE_KEY,true);$('testingAutoCreate').checked=a;$('allowNegativeStock').checked=n;var st=$('testingState');st.textContent=(a||n)?'TESTING ON':'PRODUCTION';st.className='setting-state '+((a||n)?'setting-on':'setting-off');var u=currentUser();if(u&&u.role&&u.role!=='admin')$('testingStockSettings').style.display='none';}
+
+  function loadWholesaleMap(){try{return JSON.parse(localStorage.getItem(WPRICE_KEY)||'{}')||{};}catch(e){return {};}}
+  function saveWholesaleMap(m){try{localStorage.setItem(WPRICE_KEY,JSON.stringify(m||{}));}catch(e){}}
+  function loadVehiclePriceMap(){try{return JSON.parse(localStorage.getItem(VPRICE_KEY)||'{}')||{};}catch(e){return {};}}
+  function saveVehiclePriceMap(m){try{localStorage.setItem(VPRICE_KEY,JSON.stringify(m||{}));}catch(e){}}
+  function enrichWholesale(){var wm=loadWholesaleMap(),vm=loadVehiclePriceMap();products=(products||[]).map(function(p){var code=p.code||'';p.wholesale_price=(p.wholesale_price!=null)?p.wholesale_price:(wm[code]!=null?wm[code]:p.sale_price);p.vehicle_price=(vm[code]!=null)?vm[code]:(p.vehicle_price!=null?p.vehicle_price:p.wholesale_price);return p;});}
+
+  function initCloud(){
+    try{
+      if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Offline — connect to internet to load inventory.','err');return;}
+      sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      ready=true;
+      if(localStorage.getItem(TEST_AUTO_KEY)==null)saveSetting(TEST_AUTO_KEY,true);
+      if(localStorage.getItem(NEGATIVE_KEY)==null)saveSetting(NEGATIVE_KEY,true);
+      renderTestingSettings();
+      loadProducts();
+      sb.channel('products-changes').on('postgres_changes',{event:'*',schema:'public',table:'products'},function(){loadProducts();}).subscribe();
+    }catch(e){setStatus('Offline — connect to internet to load inventory.','err');}
+  }
+
+  function loadProducts(){
+    if(!ready)return;
+    setStatus('Syncing…','warn');
+    sb.from('products').select('*').order('name_en',{ascending:true}).then(function(res){
+      if(res.error){setStatus('Could not load inventory: '+res.error.message,'err');return;}
+      products=res.data||[];
+      enrichWholesale();
+      setStatus('','');
+      render();
+    });
+  }
+
+  function fmt(n){return (Math.round((n||0)*100)/100).toFixed(2);}
+  function parentStorage(){try{return (window.parent&&window.parent!==window&&window.parent.localStorage)?window.parent.localStorage:localStorage;}catch(e){return localStorage;}}
+  function parseJSON(v,fb){try{return v?JSON.parse(v):fb;}catch(e){return fb;}}
+  function getSession(){return parseJSON(parentStorage().getItem('nag_session'),null);}
+  function getUsers(){return parseJSON(parentStorage().getItem('nag_users'),[]);}
+  function currentUser(){var s=getSession();if(!s)return null;var us=getUsers();for(var i=0;i<us.length;i++){if(String(us[i].u).toLowerCase()===String(s.u||'').toLowerCase())return us[i];}return s;}
+  function inventoryMode(){try{return String((window.parent&&window.parent.nagInventoryMode)||'full')}catch(e){return 'full'}}
+  function isAdminUser(){var u=currentUser();return !u||u.role==='admin'}
+  function canManageProducts(){return isAdminUser()}
+  function applyInventoryAccessUI(){var admin=isAdminUser(),mode=inventoryMode(),title=document.querySelector('header.app h1'),sub=document.querySelector('header.app .sub'),actionHead=document.querySelector('#tbl thead th:last-child');if(!admin){if(title)title.textContent='Main Warehouse Inventory — مخزون المستودع الرئيسي';if(sub)sub.textContent='Read-only Main Warehouse stock · access granted by Admin';if($('btnAdd'))$('btnAdd').style.display='none';if($('testingStockSettings'))$('testingStockSettings').style.display='none';if($('btnImportExcel'))$('btnImportExcel').style.display='none';if($('inventoryImportHelp'))$('inventoryImportHelp').style.display='none';if(actionHead)actionHead.style.display='none';if($('empty'))$('empty').textContent='No products are available in Main Warehouse.';}else{if(title)title.textContent='Inventory — إدارة المخزون';if(sub)sub.textContent='Nabd Al-Gharb Trading Est. · cloud-synced across devices';if($('btnAdd'))$('btnAdd').style.display='';if($('btnImportExcel'))$('btnImportExcel').style.display='';if($('inventoryImportHelp'))$('inventoryImportHelp').style.display='';if(actionHead)actionHead.style.display='';}document.body.setAttribute('data-inventory-mode',mode);}
+  function canViewCost(){var u=currentUser();return !u || u.role==='admin' || u.allowCostPrice===true || u.canViewCost===true;}
+  function myPriceAccess(){var u=currentUser();if(!u||u.role==='admin')return 'both';return u.priceAccess||'retail';}
+  function canViewRetail(){var a=myPriceAccess();return a==='retail'||a==='both';}
+  function canViewWholesale(){var a=myPriceAccess();return a==='wholesale'||a==='both';}
+  function visibleSalePrice(p){return canViewRetail()?(Number(p.sale_price)||0):(canViewWholesale()?(Number(p.wholesale_price)||0):0);}
+  function applyPricePermissionUI(){
+    Array.prototype.forEach.call(document.querySelectorAll('.cost-col,.cost-field'),function(el){el.style.display=canViewCost()?'':'none';});
+    Array.prototype.forEach.call(document.querySelectorAll('.retail-col,.retail-field'),function(el){el.style.display=canViewRetail()?'':'none';});
+    Array.prototype.forEach.call(document.querySelectorAll('.wholesale-col,.wholesale-field'),function(el){el.style.display=canViewWholesale()?'':'none';});
+    Array.prototype.forEach.call(document.querySelectorAll('.vehicle-col,.vehicle-field'),function(el){el.style.display=isAdminUser()?'':'none';});
+  }
+  function costHiddenText(){return 'Hidden';}
+  var COMPANY_HEADER_HTML='<div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #1a2b6b;font-size:11px;line-height:1.6">'+
+    '<div><b style="font-size:14px">NABD AL-GHARB TRADING EST.</b><br>P.O. Box No. 37, North Zone, Turaif, Saudi Arabia<br>VAT No: 311157282200003<br>CR: 3451102031 &nbsp; Tel: 0537859509<br>National Address: 7027457311</div>'+
+    '<div style="text-align:right;direction:rtl"><b style="font-size:14px">مؤسسة نبض الغرب التجارية</b><br>ص.ب 37 المنطقة الشمالية، طريف، المملكة العربية السعودية<br>الرقم الضريبي: 311157282200003<br>السجل التجاري: 3451102031 &nbsp; هاتف: 0537859509<br>العنوان الوطني: 7027457311</div>'+
+    '</div>';
+
+  function buildInventorySheet(){
+    var showCost=canViewCost(), showRetail=canViewRetail(), showWholesale=canViewWholesale(), showVehicle=isAdminUser();
+    var vehicleMap=loadVehiclePriceMap();
+    var totalCost=products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*(Number(p.purchase_price)||0);},0);
+    var totalVisibleSale=products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*visibleSalePrice(p);},0);
+    var headers=['<th>Code</th>','<th>Name</th>','<th>Qty</th>'];
+    if(showCost)headers.push('<th>Purchase</th>');
+    if(showRetail)headers.push('<th>Retail</th>');
+    if(showWholesale)headers.push('<th>Wholesale</th>');
+    if(showVehicle)headers.push('<th>Vehicle Price</th>');
+    headers.push('<th>VAT (15%)</th>','<th>Price+VAT</th>');
+    var body=products.map(function(p){
+      var base=visibleSalePrice(p), vatUnit=base*0.15;
+      var cells=['<td>'+(p.code||'')+'</td>','<td>'+(p.name_en||'')+'</td>','<td style="text-align:right">'+(p.qty_on_hand||0)+'</td>'];
+      if(showCost)cells.push('<td style="text-align:right">'+fmt(p.purchase_price)+'</td>');
+      if(showRetail)cells.push('<td style="text-align:right">'+fmt(p.sale_price)+'</td>');
+      if(showWholesale)cells.push('<td style="text-align:right">'+fmt(p.wholesale_price)+'</td>');
+      if(showVehicle)cells.push('<td style="text-align:right">'+fmt(vehicleMap[p.code]!=null?vehicleMap[p.code]:p.wholesale_price)+'</td>');
+      cells.push('<td style="text-align:right">'+fmt(vatUnit)+'</td>','<td style="text-align:right">'+fmt(base+vatUnit)+'</td>');
+      return '<tr>'+cells.join('')+'</tr>';
+    }).join('');
+    var totalCells=['<td colspan="2">TOTALS</td>','<td></td>'];
+    if(showCost)totalCells.push('<td style="text-align:right">'+fmt(totalCost)+'</td>');
+    if(showRetail)totalCells.push('<td style="text-align:right">'+fmt(products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*(Number(p.sale_price)||0);},0))+'</td>');
+    if(showWholesale)totalCells.push('<td style="text-align:right">'+fmt(products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*(Number(p.wholesale_price)||0);},0))+'</td>');
+    if(showVehicle)totalCells.push('<td style="text-align:right">'+fmt(products.reduce(function(s,p){var vp=vehicleMap[p.code]!=null?vehicleMap[p.code]:p.wholesale_price;return s+(Number(p.qty_on_hand)||0)*(Number(vp)||0);},0))+'</td>');
+    totalCells.push('<td style="text-align:right">'+fmt(totalVisibleSale*0.15)+'</td>','<td style="text-align:right">'+fmt(totalVisibleSale*1.15)+'</td>');
+    return '<div class="rsheet">'+COMPANY_HEADER_HTML+
+      '<div style="font-size:12px;color:#666;margin-bottom:14px">'+(isAdminUser()?'Inventory Report':'Main Warehouse Inventory Report')+' · Generated '+new Date().toLocaleString()+'</div>'+      
+      '<table><thead><tr>'+headers.join('')+'</tr></thead>'+      
+      '<tbody>'+(body||'<tr><td colspan="'+headers.length+'" style="text-align:center;color:#888">No products.</td></tr>')+'</tbody>'+      
+      '<tfoot><tr>'+totalCells.join('')+'</tr></tfoot></table></div>';
+  }
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var libsReady=false;
+  function ensureLibs(){
+    if(libsReady)return Promise.resolve();
+    setStatus('Loading PDF engine…','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js').then(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');}).then(function(){libsReady=true;setStatus('','');});
+  }
+
+  var xlsxReady=false;
+  function ensureXlsx(){
+    if(xlsxReady)return Promise.resolve();
+    if(typeof XLSX!=='undefined'){xlsxReady=true;return Promise.resolve();}
+    setStatus('Loading Excel engine…','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js').then(function(){xlsxReady=true;setStatus('','');});
+  }
+
+  $('btnExportExcel').onclick=function(){
+    ensureXlsx().then(function(){
+      var rows=products.map(function(p){
+        var row={
+          'Code':p.code||'',
+          'Name (EN)':p.name_en||'',
+          'Name (AR)':p.name_ar||'',
+          'Qty':p.qty_on_hand!=null?p.qty_on_hand:0,
+          'Reorder Level':p.reorder_level!=null?p.reorder_level:0
+        };
+        if(canViewCost()) row['Purchase Price']=p.purchase_price!=null?p.purchase_price:0;
+        if(canViewRetail()) row['Retail Price']=p.sale_price!=null?p.sale_price:0;
+        if(canViewWholesale()) row['Wholesale Price']=p.wholesale_price!=null?p.wholesale_price:p.sale_price||0;
+        if(isAdminUser()){var vehicleMap=loadVehiclePriceMap();row['Vehicle Price']=vehicleMap[p.code]!=null?vehicleMap[p.code]:(p.vehicle_price!=null?p.vehicle_price:(p.wholesale_price||p.sale_price||0));}
+        return row;
+      });
+      var ws=XLSX.utils.json_to_sheet(rows);
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Inventory');
+      XLSX.writeFile(wb,'Inventory-'+new Date().toISOString().slice(0,10)+'.xlsx');
+      setStatus('Excel file downloaded.','ok');
+    }).catch(function(){setStatus('Could not load Excel engine. Check internet connection.','err');});
+  };
+
+  $('btnImportExcel').onclick=function(){if(!canManageProducts()){setStatus('Main Warehouse inventory is read-only for cashiers.','warn');return}$('excelFile').click();};
+
+  $('excelFile').addEventListener('change',function(){
+    if(!canManageProducts()){this.value='';setStatus('Main Warehouse inventory is read-only for cashiers.','warn');return}
+    var file=this.files&&this.files[0];
+    if(!file)return;
+    ensureXlsx().then(function(){
+      var reader=new FileReader();
+      reader.onload=function(e){
+        try{
+          var data=new Uint8Array(e.target.result);
+          var wb=XLSX.read(data,{type:'array'});
+          var ws=wb.Sheets[wb.SheetNames[0]];
+          var json=XLSX.utils.sheet_to_json(ws,{defval:''});
+          if(!json.length){setStatus('The selected file has no rows.','err');return;}
+          var wm=loadWholesaleMap(),vm=loadVehiclePriceMap();var rows=json.map(function(r){
+            function pick(){for(var i=0;i<arguments.length;i++){var k=arguments[i];if(r[k]!==undefined&&r[k]!=='')return r[k];}return '';}
+            var code=String(pick('Code','code','CODE')).trim();
+            var retail=parseFloat(pick('Retail Price','Sale Price','sale_price'))||0;var wholesale=parseFloat(pick('Wholesale Price','wholesale_price'))||retail;var vehicle=parseFloat(pick('Vehicle Price','vehicle_price'));if(!isFinite(vehicle))vehicle=wholesale;if(code){wm[code]=wholesale;vm[code]=vehicle;}return {
+              code:code,
+              name_en:String(pick('Name (EN)','Name','name_en')).trim(),
+              name_ar:String(pick('Name (AR)','name_ar')).trim(),
+              purchase_price:canViewCost()?(parseFloat(pick('Purchase Price','purchase_price'))||0):undefined,
+              sale_price:retail,
+              qty_on_hand:parseFloat(pick('Qty','qty_on_hand','Qty on Hand'))||0,
+              reorder_level:parseFloat(pick('Reorder Level','reorder_level'))||0,
+              updated_at:new Date().toISOString()
+            };
+          }).filter(function(r){return r.code;});
+          if(!canViewCost()){rows.forEach(function(r){delete r.purchase_price;});}
+          saveWholesaleMap(wm);saveVehiclePriceMap(vm);if(!rows.length){setStatus('No valid rows found (each row needs a Code).','err');return;}
+          if(!confirm('Import '+rows.length+' product(s) from Excel? Existing product codes will be updated, new codes will be added.'))return;
+          if(!ready){setStatus('No internet connection right now.','err');return;}
+          setStatus('Importing '+rows.length+' product(s)…','warn');
+          sb.from('products').upsert(rows,{onConflict:'code'}).then(function(res){
+            if(res.error){setStatus('Import failed: '+res.error.message,'err');return;}
+            setStatus('Imported '+rows.length+' product(s) successfully.','ok');
+            loadProducts();
+          });
+        }catch(err){setStatus('Could not read the Excel file. Make sure it is a valid .xlsx/.xls/.csv file.','err');}
+        finally{$('excelFile').value='';}
+      };
+      reader.readAsArrayBuffer(file);
+    }).catch(function(){setStatus('Could not load Excel engine. Check internet connection.','err');$('excelFile').value='';});
+  });
+  $('btnPdf').onclick=function(){
+    ensureLibs().then(function(){
+      var host=$('sheetHost');host.innerHTML=buildInventorySheet();
+      return new Promise(function(r){setTimeout(r,250);}).then(function(){
+        return html2canvas(host.firstChild,{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+          var img=canvas.toDataURL('image/jpeg',0.92);var jsPDF=window.jspdf.jsPDF;var pdf=new jsPDF({unit:'pt',format:'a4'});
+          var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+          var iw=pw,ih=canvas.height*(pw/canvas.width);
+          if(ih<=ph){pdf.addImage(img,'JPEG',0,0,iw,ih);}else{var pos=0;while(pos<ih){pdf.addImage(img,'JPEG',0,-pos,iw,ih);pos+=ph;if(pos<ih)pdf.addPage();}}
+          pdf.save('Inventory-Report-'+new Date().toISOString().slice(0,10)+'.pdf');host.innerHTML='';setStatus('PDF created — check your Downloads.','ok');
+        });
+      });
+    }).catch(function(){setStatus('Could not load PDF engine.','err');});
+  };
+  function nagExactPdfPrintV150(html, jobName){
+    function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+    function cleanTitle(v){return String(v||'Print').replace(/[<>]/g,'');}
+    function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+    function bodyOf(h){h=stripScripts(h); var m=h.match(/<body[^>]*>([\s\S]*?)<\/body>/i); return m?m[1]:h;}
+    function stylesOf(h){var out=''; try{var ms=String(h||'').match(/<style\b[^>]*>[\s\S]*?<\/style>/gi); if(ms)out+=ms.join('\n');}catch(e){} try{out+=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){} return out;}
+    function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+    function splitCanvas(canvas){
+      var ratio=841.89/595.28;
+      var pageH=Math.floor(canvas.width*ratio);
+      var pages=[];
+      for(var y=0;y<canvas.height;y+=pageH){
+        var h=Math.min(pageH,canvas.height-y);
+        var c=document.createElement('canvas');
+        c.width=canvas.width;c.height=h;
+        var ctx=c.getContext('2d');
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+        pages.push({src:c.toDataURL('image/jpeg',0.96),h:h});
+      }
+      return pages;
+    }
+    function printImages(pages){
+      var old=document.getElementById('nagExactPdfPrintFrameV150'); if(old)old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagExactPdfPrintFrameV150';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var imgs=pages.map(function(p,i){return '<div class="nag-page"><img src="'+p.src+'"></div>';}).join('');
+      var d=ifr.contentWindow.document;
+      d.open();
+      d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+cleanTitle(jobName)+'</title><style>@page{size:A4;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}.nag-page{width:210mm;min-height:297mm;page-break-after:always;break-after:page;background:#fff;overflow:hidden}.nag-page:last-child{page-break-after:auto;break-after:auto}.nag-page img{display:block;width:210mm;height:auto;margin:0;padding:0}</style></head><body>'+imgs+'</body></html>');
+      d.close();
+      var done=false;
+      function go(){if(done)return;done=true;try{ifr.contentWindow.focus();ifr.contentWindow.print();setMsg('Windows print dialog opened with exact PDF layout.','ok');}catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}setTimeout(function(){try{ifr.remove()}catch(_e){}},12000);}
+      ifr.onload=function(){setTimeout(go,500)}; setTimeout(go,1200);
+    }
+    function render(){
+      var old=document.getElementById('nagExactPdfRenderHostV150'); if(old)old.remove();
+      var host=document.createElement('div');
+      host.id='nagExactPdfRenderHostV150';
+      host.style.cssText='position:fixed;left:-20000px;top:0;width:800px;background:#fff;opacity:0.01;pointer-events:none;z-index:-1;overflow:visible';
+      host.innerHTML=stylesOf(html)+bodyOf(html);
+      document.body.appendChild(host);
+      var target=host.querySelector('.rsheet,.receipt,.invoice,.statement,#sheet')||host.firstElementChild||host;
+      return wait(450).then(function(){
+        return html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:true,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,800),windowHeight:Math.max(target.scrollHeight,1100)});
+      }).then(function(canvas){
+        try{host.remove();}catch(e){}
+        printImages(splitCanvas(canvas));
+      }).catch(function(e){try{host.remove();}catch(_e){} setMsg('Print failed: '+(e&&e.message?e.message:e),'err');});
+    }
+    try{
+      if(typeof ensureLibs==='function'){
+        ensureLibs().then(render).catch(function(){setMsg('Could not load PDF/print engine. Connect to internet once, then retry.','err');});
+      }else if(typeof html2canvas==='undefined'){
+        var sc=document.createElement('script');
+        sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        sc.onload=render; sc.onerror=function(){setMsg('Could not load print engine.','err');}; document.head.appendChild(sc);
+      }else{render();}
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+  }
+  $('btnPrint').onclick=function(){
+    var css=document.querySelector('style').innerHTML;
+    var html='<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+buildInventorySheet()+'</body></html>';
+    nagExactPdfPrintV150(html,'Inventory-Report');
+  };
+
+  function render(){
+    var q=($('search').value||'').trim().toLowerCase();
+    var list=products.filter(function(p){
+      var matches=!q || (p.code||'').toLowerCase().indexOf(q)!==-1 || (p.name_en||'').toLowerCase().indexOf(q)!==-1 || (p.name_ar||'').indexOf(q)!==-1;
+      var isLow=Number(p.qty_on_hand)<=Number(p.reorder_level);
+      if(filterLowOnly && !isLow) return false;
+      return matches;
+    });
+
+    var tbody=$('tbody');
+    var vehicleMap=loadVehiclePriceMap();
+    tbody.innerHTML=list.map(function(p){
+      var isLow=Number(p.qty_on_hand)<=Number(p.reorder_level);
+      var priceBase=visibleSalePrice(p);
+      var vatUnit=priceBase*0.15;
+      var saleWithVatUnit=priceBase+vatUnit;
+      return '<tr class="'+(isLow?'low':'')+'" data-id="'+p.id+'">'+
+        '<td>'+(p.code||'')+'</td>'+
+        '<td>'+(p.name_en||'')+(p.name_ar?'<span class="name-ar">'+p.name_ar+'</span>':'')+
+          (isLow?'<span class="badge low" style="margin-left:6px">LOW STOCK</span>':'')+'</td>'+
+        '<td class="num">'+(p.qty_on_hand!=null?p.qty_on_hand:0)+'</td>'+
+        '<td class="num cost-col">'+fmt(p.purchase_price)+'</td>'+
+        '<td class="num retail-col">'+fmt(p.sale_price)+'</td>'+
+        '<td class="num wholesale-col">'+fmt(p.wholesale_price)+'</td>'+
+        '<td class="num vehicle-col">'+fmt((vehicleMap[p.code]!=null)?vehicleMap[p.code]:(p.vehicle_price!=null?p.vehicle_price:p.wholesale_price))+'</td>'+
+        '<td class="num">'+fmt(vatUnit)+'</td>'+
+        '<td class="num">'+fmt(saleWithVatUnit)+'</td>'+
+        (canManageProducts()?'<td><button class="icon-btn" data-edit="'+p.id+'">✏️</button></td>':'')+
+        '</tr>';
+    }).join('');
+
+    $('empty').style.display=list.length?'none':'block';
+
+    Array.prototype.forEach.call(tbody.querySelectorAll('[data-edit]'),function(b){
+      b.onclick=function(){openEdit(b.getAttribute('data-edit'));};
+    });
+
+    $('cTotal').textContent=products.length;
+    $('cLow').textContent=products.filter(function(p){return Number(p.qty_on_hand)<=Number(p.reorder_level);}).length;
+    var totalValue=products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*(Number(p.purchase_price)||0);},0);
+    if($('costSummarySpan')) $('costSummarySpan').style.display=canViewCost()?'':'none';
+    if($('cValue')) $('cValue').textContent=canViewCost()?fmt(totalValue):costHiddenText();
+    Array.prototype.forEach.call(document.querySelectorAll('.cost-col'),function(el){el.style.display=canViewCost()?'':'none';});
+    var totalSaleValue=products.reduce(function(s,p){return s+(Number(p.qty_on_hand)||0)*visibleSalePrice(p);},0);
+    var totalVatValue=totalSaleValue*0.15;
+    $('cSaleValue').textContent=fmt(totalSaleValue);
+    $('cVatValue').textContent=fmt(totalVatValue);
+    $('cSaleValueWithVat').textContent=fmt(totalSaleValue+totalVatValue);
+    applyPricePermissionUI();
+    applyInventoryAccessUI();
+  }
+
+  function applyCostUI(){applyPricePermissionUI();}
+
+  function openAdd(){
+    if(!canManageProducts()){setStatus('Main Warehouse inventory is read-only for cashiers.','warn');return}
+    editingId=null;
+    $('modalTitle').textContent='Add Product';
+    $('f_code').value='';$('f_en').value='';$('f_ar').value='';
+    $('f_purchase').value='';$('f_sale').value='';$('f_wholesale').value='';$('f_vehicle').value='';$('f_qty').value='0';$('f_reorder').value='0';
+    $('btnDelete').style.display='none';
+    applyCostUI();
+    $('modal').classList.add('show');
+  }
+
+  function openEdit(id){
+    if(!canManageProducts()){setStatus('Main Warehouse inventory is read-only for cashiers.','warn');return}
+    var p=products.find(function(x){return String(x.id)===String(id);});
+    if(!p)return;
+    editingId=p.id;
+    $('modalTitle').textContent='Edit Product';
+    $('f_code').value=p.code||'';
+    $('f_en').value=p.name_en||'';
+    $('f_ar').value=p.name_ar||'';
+    $('f_purchase').value=p.purchase_price!=null?p.purchase_price:'';
+    $('f_sale').value=p.sale_price!=null?p.sale_price:'';
+    $('f_wholesale').value=p.wholesale_price!=null?p.wholesale_price:(p.sale_price!=null?p.sale_price:'');
+    var vehicleMap=loadVehiclePriceMap();$('f_vehicle').value=vehicleMap[p.code]!=null?vehicleMap[p.code]:(p.vehicle_price!=null?p.vehicle_price:(p.wholesale_price!=null?p.wholesale_price:''));
+    $('f_qty').value=p.qty_on_hand!=null?p.qty_on_hand:'';
+    $('f_reorder').value=p.reorder_level!=null?p.reorder_level:'';
+    $('btnDelete').style.display='';
+    applyCostUI();
+    $('modal').classList.add('show');
+  }
+
+  function closeModal(){$('modal').classList.remove('show');}
+
+  function saveProduct(){
+    if(!canManageProducts()){setStatus('Main Warehouse inventory is read-only for cashiers.','err');return}
+    var code=$('f_code').value.trim();
+    if(!code){alert('Product code is required.');return;}
+    var old=products.find(function(x){return String(x.id)===String(editingId)||String(x.code)===String(code);});
+    var retailVal=canViewRetail()?(parseFloat($('f_sale').value)||0):(old&&old.sale_price!=null?Number(old.sale_price)||0:(parseFloat($('f_wholesale').value)||0));
+    var wholesaleVal=canViewWholesale()?(parseFloat($('f_wholesale').value)||0):(old&&old.wholesale_price!=null?Number(old.wholesale_price)||0:retailVal);
+    var vehicleInput=parseFloat($('f_vehicle').value);var vehicleVal=isFinite(vehicleInput)?vehicleInput:(old&&old.vehicle_price!=null?Number(old.vehicle_price)||0:wholesaleVal);
+    var row={
+      code:code,
+      name_en:$('f_en').value.trim(),
+      name_ar:$('f_ar').value.trim(),
+      purchase_price:canViewCost()?(parseFloat($('f_purchase').value)||0):(old&&old.purchase_price!=null?Number(old.purchase_price)||0:0),
+      sale_price:retailVal,
+      qty_on_hand:parseFloat($('f_qty').value)||0,
+      reorder_level:parseFloat($('f_reorder').value)||0,
+      updated_at:new Date().toISOString()
+    };
+    var w=wholesaleVal||row.sale_price;var wm=loadWholesaleMap();wm[code]=w;saveWholesaleMap(wm);row.wholesale_price=w;
+    var vm=loadVehiclePriceMap();var oldCode=old&&old.code?String(old.code):'';if(oldCode&&oldCode!==code)delete vm[oldCode];vm[code]=vehicleVal;saveVehiclePriceMap(vm);row.vehicle_price=vehicleVal;
+    if(editingId) row.id=editingId;
+    if(!ready){setStatus('No internet connection right now.','err');return;}
+    var dbRow=Object.assign({},row);delete dbRow.wholesale_price;delete dbRow.vehicle_price;sb.from('products').upsert(dbRow,{onConflict:'code'}).then(function(res){
+      if(res.error){setStatus('Save failed: '+res.error.message,'err');return;}
+      closeModal();
+      loadProducts();
+    });
+  }
+
+  function deleteProduct(){
+    if(!canManageProducts()){setStatus('Main Warehouse inventory is read-only for cashiers.','err');return}
+    if(!editingId)return;
+    if(!confirm('Delete this product?'))return;
+    var deleting=products.find(function(x){return String(x.id)===String(editingId);});
+    sb.from('products').delete().eq('id',editingId).then(function(res){
+      if(res.error){setStatus('Delete failed: '+res.error.message,'err');return;}
+      if(deleting&&deleting.code){var vm=loadVehiclePriceMap();delete vm[deleting.code];saveVehiclePriceMap(vm);}
+      closeModal();
+      loadProducts();
+    });
+  }
+
+  $('testingAutoCreate').onchange=function(){saveSetting(TEST_AUTO_KEY,this.checked);renderTestingSettings();setStatus(this.checked?'Testing auto-create is ON.':'Testing auto-create is OFF.','ok');};
+  $('allowNegativeStock').onchange=function(){saveSetting(NEGATIVE_KEY,this.checked);renderTestingSettings();setStatus(this.checked?'Negative Warehouse stock is allowed.':'Negative Warehouse stock is blocked.','ok');};
+  $('btnAdd').onclick=openAdd;
+  $('btnCancel').onclick=closeModal;
+  $('btnSave').onclick=saveProduct;
+  $('btnDelete').onclick=deleteProduct;
+  $('search').oninput=render;
+  $('fAll').onclick=function(){filterLowOnly=false;$('fAll').classList.add('active');$('fLow').classList.remove('active');render();};
+  $('fLow').onclick=function(){filterLowOnly=true;$('fLow').classList.add('active');$('fAll').classList.remove('active');render();};
+  $('homeLink').onclick=function(e){e.preventDefault();if(window.parent!==window){window.parent.postMessage('home','*');}else{location.href='index.html';}};
+
+  window.addEventListener('load',function(){applyInventoryAccessUI();initCloud();});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+
+<script id="nag-desktop-clean-html-print-v148">
+(function(){
+  if(window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__) return;
+  window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__ = true;
+  function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+  function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+  function fullDoc(h, jobName){
+    h=stripScripts(h);
+    if(/<html[\s>]/i.test(h)){
+      h=h.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+      return h;
+    }
+    var css='';
+    try{css=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){}
+    return '<!doctype html><html><head><meta charset="utf-8"><title>'+String(jobName||'Print').replace(/[<>]/g,'')+'</title>'+css+'<style>@page{size:auto;margin:8mm}html,body{background:#fff!important;margin:0!important;padding:0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}</style></head><body>'+h+'</body></html>';
+  }
+  function printHtmlClean(html, jobName){
+    try{
+      var old=document.getElementById('nagDesktopPrintFrameV148'); if(old) old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagDesktopPrintFrameV148';
+      ifr.title=jobName||'Print';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var d=ifr.contentWindow.document; d.open(); d.write(fullDoc(html, jobName)); d.close();
+      var done=false;
+      function go(){
+        if(done)return; done=true;
+        try{ifr.contentWindow.focus(); ifr.contentWindow.print(); setMsg('Windows print dialog opened with clean PDF layout.','ok');}
+        catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+        setTimeout(function(){try{ifr.remove()}catch(_e){}},8000);
+      }
+      ifr.onload=function(){setTimeout(go,350)};
+      setTimeout(go,900);
+      return true;
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err'); return false;}
+  }
+  window.nagDesktopPrintHtmlClean = printHtmlClean;
+  window.nagDesktopCleanPrint = printHtmlClean;
+  window.printSheet = function(html, jobName){return printHtmlClean(html, jobName||document.title||'Document');};
+  try{ printSheet = window.printSheet; }catch(e){}
+  window.openPdfForPrint = function(pdf, filename){setMsg('Old PDF print flow is disabled. This module should use clean HTML print layout.','warn'); return false;};
+  window.openPdfForPrintUnified = window.openPdfForPrint;
+  window.nagOpenPdfWindowAndPrint = window.openPdfForPrint;
+  try{ openPdfForPrint = window.openPdfForPrint; }catch(e){}
+  try{ openPdfForPrintUnified = window.openPdfForPrintUnified; }catch(e){}
+})();
+</script>
+
+</body>
+</html>

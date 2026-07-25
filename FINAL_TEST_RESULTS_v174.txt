@@ -1,0 +1,19 @@
+Nabd Al-Gharb Desktop v1.7.4 - Khurooj Phase 1 Validation
+
+PASS: package.json, Cargo.toml and tauri.conf.json version consistency
+PASS: JSON configuration syntax
+PASS: GitHub Actions YAML syntax
+PASS: Employee module JavaScript syntax
+PASS: Khurooj module JavaScript syntax
+PASS: Main desktop shell JavaScript syntax
+PASS: Khurooj card and admin-only module handler embedded
+PASS: Khurooj Supabase CRUD and realtime code present
+PASS: Return-date reminder logic present
+PASS: Iqama and passport fields added to Employee module
+PASS: Supabase migration script included
+PASS: No internal OpenAI npm registry references
+
+Important setup before using Khurooj:
+Run SUPABASE_KHUROOJ_MODULE.sql once in the Supabase SQL Editor.
+
+Windows installer build was not executed inside this Linux validation environment. The included GitHub Actions workflows are syntax validated and preserve the existing signing setup.

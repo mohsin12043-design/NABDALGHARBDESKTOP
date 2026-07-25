@@ -1,0 +1,27 @@
+NABD AL-GHARB DESKTOP v1.8.2 TEST RESULTS
+
+PASS  package.json version is 1.8.2
+PASS  Cargo.toml version is 1.8.2
+PASS  tauri.conf.json version is 1.8.2
+PASS  Tauri main.rs exists and is non-empty
+PASS  Dedicated vehicle return card is present
+PASS  Return selectors and quantity fields are present
+PASS  Available quantity auto-fill function is present
+PASS  Return product list uses current vehicle inventory
+PASS  Return blocks quantity above available stock
+PASS  Return reduces vehicle stock
+PASS  Return increases Main Warehouse stock
+PASS  Return sends Supabase increment message
+PASS  Return creates VRT reference through return movement type
+PASS  Return stores before and after balances
+PASS  Return company document opens after submission
+PASS  Return card is hidden in inventory-only mode
+PASS  Return card is available in full cashier mode
+PASS  Old settlement duplicate return option was removed
+PASS  Clickable return references remain in report and history
+PASS  Vehicle Stock JavaScript syntax check
+PASS  Embedded Vehicle Stock module matches decoded v1.8.2 source
+
+TOTAL: 21 passed, 0 failed.
+
+Windows installer was not compiled in this environment. Use GitHub Actions to generate the signed Windows installer.
