@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ==============================================
-echo NABD AL-GHARB DESKTOP FINAL WINDOWS BUILD 1.7.2
+echo NABD AL-GHARB DESKTOP FINAL WINDOWS BUILD 2.2.0
 echo ==============================================
 
 where node >nul 2>nul || (

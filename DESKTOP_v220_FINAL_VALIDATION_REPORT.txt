@@ -1,0 +1,56 @@
+NABD AL-GHARB DESKTOP v2.2.0
+MOBILE PARITY AND DATA SAFETY RELEASE
+Date: 03 August 2026
+
+FINAL RESULT
+
+The Desktop v2.2.0 working copy was created separately. The original Desktop ZIP and extracted v2.1.1 reference were not edited.
+
+Automated validation results:
+
+1. Source and feature validation: 131 passed, 0 failed
+2. Backup, restore and reset data tests: 36 passed, 0 failed
+3. Screen structure and local asset validation: 44 passed, 0 failed
+4. Embedded modules exported and parsed: 23 of 23
+5. JavaScript syntax validation: Passed for the Desktop shell, every embedded module and every runtime patch
+
+MAIN MOBILE FEATURES PORTED TO DESKTOP
+
+1. Customer Ledger cloud-first recovery, historical receipt sync, correct paid and remaining allocation, correct Pending and Overdue status and horizontal mobile-style table scrolling.
+2. Tax Invoice previous cloud detail opening and automatic Credit Tax Invoice link to the matching Customer Ledger.
+3. Cash Receipt historical history recovery and cashier ownership scope.
+4. Assigned Inventory for Admin and cashier users, Vehicle and Mini Store assignment support, price privacy, VAT and Total With VAT.
+5. Vehicle Stock and Mini Store customer details, remaining stock, linked sales return and damaged movements, settlement correction, VAT and Total With VAT documents.
+6. Central Stock Control old-record price recovery, Unit Price, VAT, Total With VAT, opening and remaining balance document details.
+7. Sales Return previous Cash and Credit invoice selection with selected item return workflow.
+8. Vendor complete details, purchase invoice opening, product rows, attachment, PDF and Print.
+9. Purchase Report invoice opening, attachment, Unit Price, VAT, Total With VAT, PDF and Print.
+10. Bank and Cash separate or combined history with matching PDF and Print output.
+11. Khurooj PDF, Print, company layout and expiry notification handling for Desktop.
+12. Cashier permission compatibility using Assigned Inventory permission and Admin-only Khurooj protection.
+13. Desktop low-stock notification fallback and Desktop software update panel.
+
+BACKUP, RESTORE AND RESET SAFETY
+
+1. Complete backup includes all local app data plus available cloud tables.
+2. Restore merges records and does not delete existing records.
+3. Production Reset is Admin-only and requires internet, confirmation text and Admin password.
+4. A complete backup must succeed before the reset can continue.
+5. Customer Ledger, Inventory and Products, Employees, Khurooj, stock locations, company settings, Cashier users and permissions remain protected.
+6. Only transaction data listed on the reset screen is cleared.
+7. No manual SQL is required for this release.
+
+INTEGRITY RECORD
+
+Original Desktop ZIP SHA-256:
+01B6C8B335B0E32FCADC1B8A50D6D70ED99500AF360782E8A4AF056B00729C35
+
+Original Desktop v2.1.1 dist/index.html SHA-256:
+B187B8896F2E36FED36FCB4EE43B1298290A17BECA218D8A51EF30031C3B4B22
+
+Desktop v2.2.0 dist/index.html SHA-256:
+A458D1A7418DFA75511FAF99F39EFBFDC801230D2690957E00866CC4F5DDB390
+
+NOTE
+
+This package is the complete Desktop project ZIP. A Windows installer was not compiled in this workspace because the Rust and Tauri compiler is not installed here. The included project keeps the existing Windows build setup and is ready for the normal Desktop build environment.
