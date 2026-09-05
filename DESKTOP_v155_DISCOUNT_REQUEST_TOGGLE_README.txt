@@ -1,0 +1,1 @@
+Desktop v155 added Settings Discount Request Approval ON/OFF toggle. Tax Invoice discount approval is controlled by localStorage key nag_discount_approval_enabled_v1. Sales Return is not affected. Previous v150 print and Sales Return fixes preserved.

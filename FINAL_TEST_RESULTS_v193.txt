@@ -1,0 +1,34 @@
+NABD AL-GHARB DESKTOP v1.9.3 TEST RESULTS
+
+MINI STORE DAMAGE AND MISSING VALIDATION
+PASS  Version consistency
+PASS  Tauri main file present
+PASS  Damaged and Missing Mini Store Stock section
+PASS  Available quantity auto-fill
+PASS  Full and partial adjustment quantity
+PASS  Damage and Missing movement types
+PASS  Reason and remarks fields
+PASS  Optional evidence photo
+PASS  Evidence photo compression and preview
+PASS  Evidence stored with movement record
+PASS  Evidence included in company PDF
+PASS  Cashier assignment permission guard
+PASS  Excess quantity is blocked
+PASS  Mini Store stock decreases
+PASS  Main Warehouse remains unchanged
+PASS  MDM damaged stock reference
+PASS  MMS missing stock reference
+PASS  Before and after balances stored
+PASS  Movement document opens after save
+PASS  Existing return, Tax Invoice and cashier scope features remain
+PASS  Embedded Mini Store source matches decoded source
+PASS  Mini Store JavaScript syntax
+
+Targeted module validation: 33 passed, 0 failed
+Complete source validation: 58 passed, 0 warnings, 0 failures
+
+SUPABASE
+No new SQL is required.
+
+WINDOWS INSTALLER
+Not built in this environment. Build once with GitHub Actions after all Mini Store modules are complete.

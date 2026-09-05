@@ -1,0 +1,48 @@
+NABD AL-GHARB DESKTOP v1.9.6 TEST RESULTS
+
+PASS package version
+PASS tauri version
+PASS cargo version
+PASS tauri main file
+PASS preview button
+PASS report status column
+PASS current report state
+PASS settlement html function
+PASS settlement open function
+PASS report renderer
+PASS cash sales summary
+PASS credit sales summary
+PASS paid summary
+PASS pending summary
+PASS correction count
+PASS corrected quantity
+PASS current remaining
+PASS expected stock
+PASS stock difference
+PASS stock reconciliation PDF
+PASS company VAT
+PASS company CR
+PASS company national address
+PASS assigned store report guard
+PASS render guard
+PASS invoice clickable
+PASS movement clickable
+PASS inventory-only report hidden
+PASS admin report visible
+PASS button event
+PASS no quotation in Mini Store bill
+PASS return feature retained
+PASS damage feature retained
+PASS correction feature retained
+PASS updater endpoint retained
+PASS embedded module found
+PASS embedded module matches decoded source
+PASS Mini Store JavaScript syntax
+
+RESULT: 38 passed, 0 failed
+
+SUPABASE
+No new SQL is required.
+
+WINDOWS INSTALLER
+Not built in this environment. Build once with GitHub Actions after all Mini Store modules are complete.

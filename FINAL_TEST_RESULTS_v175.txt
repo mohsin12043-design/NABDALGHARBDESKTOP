@@ -1,0 +1,17 @@
+NABD AL-GHARB DESKTOP v1.7.5 TEST RESULTS
+
+PASS  Version consistency across package.json, Cargo.toml and tauri.conf.json
+PASS  Required desktop application files present
+PASS  Updater endpoint and public key configured
+PASS  Vehicle Stock, Mini Store and Stock Control modules embedded
+PASS  Inline JavaScript syntax checks
+PASS  JSON validation
+PASS  Vehicle transfer test: Warehouse 5, transfer 30, Warehouse -25, Vehicle 30
+PASS  Mini Store transfer test: Warehouse 5, transfer 30, Warehouse -25, Mini Store 30
+PASS  Vehicle auto-create missing item test
+PASS  Mini Store auto-create missing item test
+PASS  Negative Stock OFF blocks excessive transfer
+PASS  Auto-Create OFF blocks missing item creation
+PASS  Testing settings included in cloud sync keys
+
+Windows installer was not compiled in this container. Use GitHub Actions to build the signed installer.

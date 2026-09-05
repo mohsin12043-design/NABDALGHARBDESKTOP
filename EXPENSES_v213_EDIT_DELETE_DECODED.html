@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb — Expenses</title>
+<style>
+  :root{--navy:#1a2b6b;--navy-d:#142156;--gold:#C8941F;--gold-l:#E0A823;--cream:#FBF7EC;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  .wrap{max-width:900px;margin:0 auto}
+  header.app{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  header.app h1{font-size:17px;font-weight:700;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:40px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-gold{background:var(--gold);color:#fff}
+  .btn-ghost{background:#eef0f5;color:var(--navy)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .stat .val{font-size:19px;font-weight:800;color:var(--navy)}
+  .stat .sub2{font-size:11px;color:var(--muted);margin-top:2px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:0 0 10px;font-weight:700}
+  input,select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--navy);background:#fff}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+  .field{margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .filters button{flex:1;min-width:90px;border:none;border-radius:8px;padding:9px 10px;font-size:12.5px;font-weight:600;cursor:pointer;background:#eef0f5;color:var(--navy)}
+  .filters button.active{outline:2px solid var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;padding:6px;border-bottom:2px solid var(--line)}
+  td{padding:7px 6px;border-bottom:1px solid var(--line)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .cat-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;background:#eef0f5;color:var(--navy)}
+  .entry-actions{display:flex;justify-content:flex-end;gap:6px;white-space:nowrap}
+  .entry-btn{border:0;border-radius:7px;padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+  .entry-edit{background:#eef0f5;color:var(--navy)}
+  .entry-delete{background:var(--bad-bg);color:var(--bad)}
+  .empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:flex-start;justify-content:center;padding:16px;z-index:50;overflow:auto}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:12px;padding:16px;max-width:460px;width:100%;margin-top:20px}
+  .modal h3{margin:0 0 12px;font-size:15px;color:var(--navy)}
+  .modal-actions{display:flex;gap:8px;margin-top:12px}
+  #sheetHost{position:fixed;left:-9999px;top:0;width:800px}
+  .rsheet{background:#fff;padding:24px;font-family:Arial,sans-serif;color:#222}
+  .rsheet h1{font-size:20px;color:var(--navy);margin:0 0 2px}
+  .rsheet .rsub{font-size:12px;color:#666;margin-bottom:14px}
+  .rsheet table{width:100%;border-collapse:collapse;font-size:12px}
+  .rsheet th{background:#eef0f5;text-align:left;padding:6px 8px;border:1px solid #ccc}
+  .rsheet td{padding:6px 8px;border:1px solid #ccc}
+  .rsheet tfoot td{font-weight:800;background:#f7f7f7}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+      <h1>Company Expenses — مصروفات الشركة</h1>
+      <div class="sub">Nabd Al-Gharb Trading Est. · cloud-synced across devices</div></div>
+    <div class="row-actions">
+      <button class="btn btn-gold" id="btnAddExpense">+ Add Expense</button>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="stat"><div class="lbl">Today</div><div class="val" id="cToday">0.00</div><div class="sub2"><span id="cTodayCount">0</span> expense(s)</div></div>
+    <div class="stat"><div class="lbl">This Month</div><div class="val" id="cMonth">0.00</div><div class="sub2"><span id="cMonthCount">0</span> expense(s)</div></div>
+    <div class="stat"><div class="lbl">All-Time</div><div class="val" id="cAll">0.00</div><div class="sub2"><span id="cAllCount">0</span> expense(s)</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Download Report</h2>
+    <button class="btn btn-gold" id="btnPdfMonth" style="width:100%">📄 This Month's Expense Report PDF</button>
+    <button class="btn btn-ghost" id="btnPrintExpenses" style="width:100%;margin-top:8px">🖨️ Print This Month's Report</button>
+    <button class="btn btn-navy" id="btnExportExcel" style="width:100%;margin-top:8px">📊 Export All to Excel</button>
+  </div>
+
+  <div class="card">
+    <h2>Charts</h2>
+    <canvas id="chartExpCategory" height="200"></canvas>
+    <div style="height:16px"></div>
+    <canvas id="chartExpMonthly" height="180"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Expense History</h2>
+    <div class="filters">
+      <button class="active" id="fAll">All</button>
+      <button id="fToday">Today</button>
+      <button id="fMonth">This Month</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Date</th><th>Category</th><th>Description</th><th class="num">Amount</th><th class="num">Actions</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">No expenses recorded yet.</div>
+    </div>
+  </div>
+</div>
+<div id="sheetHost"></div>
+
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <h3 id="expenseModalTitle">Add Expense</h3>
+    <div class="field"><label>Date</label><input id="e_date" type="date"></div>
+    <div class="field"><label>Time</label>
+      <div style="display:flex;gap:4px">
+        <select id="ex_hour" style="flex:1"></select>
+        <select id="ex_min" style="flex:1"></select>
+        <select id="ex_ampm" style="flex:1"><option>AM</option><option>PM</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Category</label>
+      <select id="e_category">
+        <option>Rent</option><option>Salaries</option><option>Utilities (Electricity/Water)</option>
+        <option>Fuel/Transport</option><option>Maintenance</option><option>Supplies</option>
+        <option>Marketing</option><option>Government Fees</option><option>Other</option>
+      </select>
+    </div>
+    <div class="field"><label>Description</label><input id="e_desc" placeholder="e.g. July office rent"></div>
+    <div class="grid2">
+      <div class="field"><label>Amount (SAR)</label><input id="e_amount" type="number" step="0.01" inputmode="decimal"></div>
+      <div class="field"><label>Payment Method</label>
+        <select id="e_method"><option>Cash</option><option>Bank Transfer</option><option>Card</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Attach Receipt (photo or PDF, optional)</label><input id="e_receipt" type="file" accept="image/*,application/pdf"></div>
+    <div class="modal-actions">
+      <button class="btn btn-navy" id="btnSaveExpense" style="flex:1">Save</button>
+      <button class="btn btn-ghost" id="btnCancelExpense" style="flex:1">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function $(id){return document.getElementById(id);}
+  function fillTimeSelect(hourId,minId,ampmId){
+    var h=$(hourId), m=$(minId), ap=$(ampmId);
+    if(!h||!m||!ap)return;
+    if(!h.options.length){for(var i=1;i<=12;i++){var o=document.createElement('option');o.value=i;o.textContent=(i<10?'0':'')+i;h.appendChild(o);}}
+    if(!m.options.length){for(var j=0;j<60;j++){var o2=document.createElement('option');o2.value=j;o2.textContent=(j<10?'0':'')+j;m.appendChild(o2);}}
+    var now=new Date();
+    var hh=now.getHours();var ampmVal=hh>=12?'PM':'AM';var hh12=hh%12;if(hh12===0)hh12=12;
+    h.value=hh12;m.value=now.getMinutes();ap.value=ampmVal;
+  }
+  function getTimeString(hourId,minId,ampmId){
+    var h=$(hourId),m=$(minId),ap=$(ampmId);
+    if(!h||!m||!ap)return'';
+    var mm=m.value;if(String(mm).length<2)mm='0'+mm;
+    return h.value+':'+mm+' '+ap.value;
+  }
+  function setExpenseTime(value){
+    fillTimeSelect('ex_hour','ex_min','ex_ampm');
+    var m=String(value||'').trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if(!m)return;
+    $('ex_hour').value=String(Number(m[1]));
+    $('ex_min').value=String(Number(m[2]));
+    $('ex_ampm').value=m[3].toUpperCase();
+  }
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg;s.className=cls||'';}
+  function fmt(n){return (Math.round((n||0)*100)/100).toFixed(2);}
+  var COMPANY_HEADER_HTML='<div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #1a2b6b;font-size:11px;line-height:1.6">'+
+    '<div><b style="font-size:14px">NABD AL-GHARB TRADING EST.</b><br>P.O. Box No. 37, North Zone, Turaif, Saudi Arabia<br>VAT No: 311157282200003<br>CR: 3451102031 &nbsp; Tel: 0537859509<br>National Address: 7027457311</div>'+
+    '<div style="text-align:right;direction:rtl"><b style="font-size:14px">مؤسسة نبض الغرب التجارية</b><br>ص.ب 37 المنطقة الشمالية، طريف، المملكة العربية السعودية<br>الرقم الضريبي: 311157282200003<br>السجل التجاري: 3451102031 &nbsp; هاتف: 0537859509<br>العنوان الوطني: 7027457311</div>'+
+    '</div>';
+
+  function todayStr(){return new Date().toISOString().slice(0,10);}
+  function monthStr(){return todayStr().slice(0,7);}
+
+  var SUPABASE_URL="https://vqtlibpsdxyvophzzkrx.supabase.co";
+  var SUPABASE_KEY="sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_";
+  var sb=null, ready=false;
+  var expenses=[];
+  var editingExpense=null;
+  var filter='all';
+
+  function initCloud(){
+    try{
+      if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Offline — connect to internet to load expenses.','err');return;}
+      sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      ready=true;
+      loadExpenses();
+      sb.channel('expenses-changes').on('postgres_changes',{event:'*',schema:'public',table:'expenses'},function(){loadExpenses();}).subscribe();
+    }catch(e){setStatus('Offline — connect to internet to load expenses.','err');}
+  }
+
+  function loadExpenses(){
+    if(!ready)return;
+    setStatus('Syncing…','warn');
+    sb.from('expenses').select('*').order('expense_date',{ascending:false}).order('created_at',{ascending:false}).then(function(res){
+      if(res.error){setStatus('Could not load expenses: '+res.error.message,'err');return;}
+      expenses=res.data||[];
+      setStatus('','');
+      renderStats();
+      render();
+    });
+  }
+
+  function renderStats(){
+    var today=todayStr(), month=monthStr();
+    var todayRows=expenses.filter(function(e){return e.expense_date===today;});
+    var monthRows=expenses.filter(function(e){return (e.expense_date||'').slice(0,7)===month;});
+    $('cToday').textContent=fmt(todayRows.reduce(function(a,e){return a+Number(e.amount||0);},0));
+    $('cTodayCount').textContent=todayRows.length;
+    $('cMonth').textContent=fmt(monthRows.reduce(function(a,e){return a+Number(e.amount||0);},0));
+    $('cMonthCount').textContent=monthRows.length;
+    $('cAll').textContent=fmt(expenses.reduce(function(a,e){return a+Number(e.amount||0);},0));
+    $('cAllCount').textContent=expenses.length;
+    ensureChartLib().then(renderExpenseCharts);
+  }
+
+  function loadScriptOnce(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var chartLibReady=false;
+  function ensureChartLib(){
+    if(chartLibReady||typeof Chart!=='undefined'){chartLibReady=true;return Promise.resolve();}
+    return loadScriptOnce('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js').then(function(){chartLibReady=true;}).catch(function(){});
+  }
+  var chartExpCategory=null, chartExpMonthly=null;
+  function renderExpenseCharts(){
+    if(typeof Chart==='undefined')return;
+    var byCat={};
+    expenses.forEach(function(e){var c=e.category||'Other';byCat[c]=(byCat[c]||0)+Number(e.amount||0);});
+    var catNames=Object.keys(byCat).sort(function(a,b){return byCat[b]-byCat[a];});
+    var c1=$('chartExpCategory');
+    if(chartExpCategory)chartExpCategory.destroy();
+    chartExpCategory=new Chart(c1,{type:'pie',data:{labels:catNames,datasets:[{data:catNames.map(function(c){return byCat[c];}),backgroundColor:['#1a2b6b','#C8941F','#1f7a3d','#b3261e','#9E7415','#5b6373','#8CF1A3','#254262']}]},options:{responsive:true,plugins:{title:{display:true,text:'Expenses by Category (all-time)'}}}});
+
+    var months=[];var d=new Date();d.setDate(1);
+    for(var i=11;i>=0;i--){var m=new Date(d.getFullYear(),d.getMonth()-i,1);months.push(m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0'));}
+    var byMonth={};months.forEach(function(m){byMonth[m]=0;});
+    expenses.forEach(function(e){var m=(e.expense_date||'').slice(0,7);if(m in byMonth)byMonth[m]+=Number(e.amount||0);});
+    var c2=$('chartExpMonthly');
+    if(chartExpMonthly)chartExpMonthly.destroy();
+    chartExpMonthly=new Chart(c2,{type:'bar',data:{labels:months,datasets:[{label:'Monthly Expenses (SAR)',data:months.map(function(m){return byMonth[m];}),backgroundColor:'#b3261e'}]},options:{responsive:true,plugins:{title:{display:true,text:'Monthly Expenses — last 12 months'},legend:{display:false}}}});
+  }
+
+  function render(){
+    var today=todayStr(), month=monthStr();
+    var list=expenses.filter(function(e){
+      if(filter==='today')return e.expense_date===today;
+      if(filter==='month')return (e.expense_date||'').slice(0,7)===month;
+      return true;
+    });
+    $('tbody').innerHTML=list.map(function(e,i){
+      var hasReceipt=!!e.receipt_data;
+      return '<tr><td>'+(e.expense_date||'')+(e.entry_time?'<br><span style="font-size:10px;color:#888">'+e.entry_time+'</span>':'')+'</td>'+
+        '<td><span class="cat-pill">'+(e.category||'Other')+'</span></td>'+
+        '<td>'+(e.description||'')+(hasReceipt?' <span class="view-receipt" data-i="'+i+'" style="cursor:pointer" title="Open receipt">📎</span>':'')+'</td>'+
+        '<td class="num">'+fmt(e.amount)+'</td>'+
+        '<td class="entry-actions"><button type="button" class="entry-btn entry-edit" data-edit="'+i+'">Edit</button><button type="button" class="entry-btn entry-delete" data-delete="'+i+'">Delete</button></td></tr>';
+    }).join('');
+    $('empty').style.display=list.length?'none':'block';
+    Array.prototype.forEach.call($('tbody').querySelectorAll('.view-receipt'),function(el){
+      el.onclick=function(){openReceipt(list[+el.getAttribute('data-i')]);};
+    });
+    Array.prototype.forEach.call($('tbody').querySelectorAll('[data-edit]'),function(el){
+      el.onclick=function(){openExpenseEditor(list[+el.getAttribute('data-edit')]);};
+    });
+    Array.prototype.forEach.call($('tbody').querySelectorAll('[data-delete]'),function(el){
+      el.onclick=function(){deleteExpense(list[+el.getAttribute('data-delete')]);};
+    });
+  }
+
+  function openReceipt(e){
+    if(!e||!e.receipt_data)return;
+    var mime=e.receipt_mime||'application/octet-stream';
+    var filename=e.receipt_filename||'receipt';
+    var a=document.createElement('a');
+    a.href='data:'+mime+';base64,'+e.receipt_data;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  function setFilter(f,btn){
+    filter=f;
+    Array.prototype.forEach.call(document.querySelectorAll('.filters button'),function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    render();
+  }
+  $('fAll').onclick=function(){setFilter('all',this);};
+  $('fToday').onclick=function(){setFilter('today',this);};
+  $('fMonth').onclick=function(){setFilter('month',this);};
+
+  $('btnAddExpense').onclick=function(){
+    editingExpense=null;
+    $('expenseModalTitle').textContent='Add Expense';
+    $('btnSaveExpense').textContent='Save';
+    $('e_date').value=todayStr();$('e_category').value='Other';$('e_desc').value='';
+    $('e_amount').value='';$('e_method').value='Cash';$('e_receipt').value='';
+    fillTimeSelect('ex_hour','ex_min','ex_ampm');
+    $('expenseModal').classList.add('show');
+  };
+  function openExpenseEditor(expense){
+    if(!expense)return;
+    editingExpense=expense;
+    $('expenseModalTitle').textContent='Edit Expense';
+    $('btnSaveExpense').textContent='Update';
+    $('e_date').value=expense.expense_date||todayStr();
+    $('e_category').value=expense.category||'Other';
+    $('e_desc').value=expense.description||'';
+    $('e_amount').value=Number(expense.amount)||0;
+    $('e_method').value=expense.payment_method||'Cash';
+    $('e_receipt').value='';
+    setExpenseTime(expense.entry_time);
+    $('expenseModal').classList.add('show');
+  }
+  function deleteExpense(expense){
+    if(!expense||expense.id==null)return;
+    if(!ready){setStatus('No internet connection.','err');return;}
+    if(!window.confirm('Delete this expense permanently?\n\n'+(expense.description||expense.category||'Expense')+'\nSAR '+fmt(expense.amount)))return;
+    setStatus('Deleting expense...','warn');
+    sb.from('expenses').delete().eq('id',expense.id).then(function(res){
+      if(res.error){setStatus('Delete failed: '+res.error.message,'err');return;}
+      if(editingExpense&&String(editingExpense.id)===String(expense.id))editingExpense=null;
+      setStatus('Expense deleted.','ok');
+      loadExpenses();
+    });
+  }
+  $('btnCancelExpense').onclick=function(){editingExpense=null;$('expenseModal').classList.remove('show');};
+  $('btnSaveExpense').onclick=function(){
+    var amt=parseFloat($('e_amount').value)||0;
+    if(amt<=0){alert('Enter a valid amount.');return;}
+    if(!ready){setStatus('No internet connection.','err');return;}
+    var fileInput=$('e_receipt');
+    var file=fileInput.files&&fileInput.files[0];
+    function proceed(receiptData,receiptMime,receiptFilename){
+      var payload={
+        expense_date:$('e_date').value||todayStr(),
+        entry_time:getTimeString('ex_hour','ex_min','ex_ampm'),
+        category:$('e_category').value,
+        description:$('e_desc').value.trim(),
+        amount:amt,
+        payment_method:$('e_method').value,
+        receipt_data:receiptData,receipt_mime:receiptMime,receipt_filename:receiptFilename
+      };
+      var query;
+      if(editingExpense&&editingExpense.id!=null){
+        if(receiptData==null){
+          payload.receipt_data=editingExpense.receipt_data||null;
+          payload.receipt_mime=editingExpense.receipt_mime||null;
+          payload.receipt_filename=editingExpense.receipt_filename||null;
+        }
+        query=sb.from('expenses').update(payload).eq('id',editingExpense.id);
+      }else{
+        query=sb.from('expenses').insert(payload);
+      }
+      query.then(function(res){
+        if(res.error){setStatus('Save failed: '+res.error.message,'err');return;}
+        var wasEditing=!!editingExpense;
+        editingExpense=null;
+        $('expenseModal').classList.remove('show');
+        setStatus(wasEditing?'Expense updated.':'Expense saved.','ok');
+        loadExpenses();
+      });
+    }
+    if(file){
+      var reader=new FileReader();
+      reader.onload=function(){
+        var dataUrl=reader.result||'';
+        proceed(dataUrl.split(',')[1]||'',file.type||'application/octet-stream',file.name||'receipt');
+      };
+      reader.onerror=function(){proceed(null,null,null);};
+      reader.readAsDataURL(file);
+    }else{
+      proceed(null,null,null);
+    }
+  };
+
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var libsReady=false;
+  function ensureLibs(){
+    if(libsReady)return Promise.resolve();
+    setStatus('Loading PDF engine… (needs internet the first time)','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      .then(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');})
+      .then(function(){libsReady=true;setStatus('','');});
+  }
+  function buildExpenseReportSheet(rows, monthLabel){
+    var byCategory={};
+    rows.forEach(function(e){byCategory[e.category||'Other']=(byCategory[e.category||'Other']||0)+Number(e.amount||0);});
+    var catRows=Object.keys(byCategory).map(function(c){return '<tr><td>'+c+'</td><td style="text-align:right">'+fmt(byCategory[c])+'</td></tr>';}).join('');
+    var body=rows.map(function(e){
+      return '<tr><td>'+(e.expense_date||'')+(e.entry_time?' '+e.entry_time:'')+'</td><td>'+(e.category||'')+'</td><td>'+(e.description||'')+'</td><td>'+(e.payment_method||'')+'</td><td style="text-align:right">'+fmt(e.amount)+'</td></tr>';
+    }).join('');
+    var total=rows.reduce(function(s,e){return s+Number(e.amount||0);},0);
+    return '<div class="rsheet">'+
+      COMPANY_HEADER_HTML+
+      '<div class="rsub">Monthly Expense Report — '+monthLabel+' · Generated '+new Date().toLocaleString()+'</div>'+
+      '<h3 style="font-size:13px;color:#1a2b6b">By Category</h3>'+
+      '<table style="margin-bottom:16px"><thead><tr><th>Category</th><th>Amount</th></tr></thead><tbody>'+(catRows||'')+'</tbody></table>'+
+      '<h3 style="font-size:13px;color:#1a2b6b">All Expenses</h3>'+
+      '<table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Method</th><th>Amount</th></tr></thead>'+
+      '<tbody>'+(body||'<tr><td colspan="5" style="text-align:center;color:#888">No expenses this month.</td></tr>')+'</tbody>'+
+      '<tfoot><tr><td colspan="4">TOTAL</td><td style="text-align:right">'+fmt(total)+'</td></tr></tfoot>'+
+      '</table></div>';
+  }
+  function nagExactPdfPrintV150(html, jobName){
+    function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+    function cleanTitle(v){return String(v||'Print').replace(/[<>]/g,'');}
+    function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+    function bodyOf(h){h=stripScripts(h); var m=h.match(/<body[^>]*>([\s\S]*?)<\/body>/i); return m?m[1]:h;}
+    function stylesOf(h){var out=''; try{var ms=String(h||'').match(/<style\b[^>]*>[\s\S]*?<\/style>/gi); if(ms)out+=ms.join('\n');}catch(e){} try{out+=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){} return out;}
+    function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+    function splitCanvas(canvas){
+      var ratio=841.89/595.28;
+      var pageH=Math.floor(canvas.width*ratio);
+      var pages=[];
+      for(var y=0;y<canvas.height;y+=pageH){
+        var h=Math.min(pageH,canvas.height-y);
+        var c=document.createElement('canvas');
+        c.width=canvas.width;c.height=h;
+        var ctx=c.getContext('2d');
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+        pages.push({src:c.toDataURL('image/jpeg',0.96),h:h});
+      }
+      return pages;
+    }
+    function printImages(pages){
+      var old=document.getElementById('nagExactPdfPrintFrameV150'); if(old)old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagExactPdfPrintFrameV150';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var imgs=pages.map(function(p,i){return '<div class="nag-page"><img src="'+p.src+'"></div>';}).join('');
+      var d=ifr.contentWindow.document;
+      d.open();
+      d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+cleanTitle(jobName)+'</title><style>@page{size:A4;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}.nag-page{width:210mm;min-height:297mm;page-break-after:always;break-after:page;background:#fff;overflow:hidden}.nag-page:last-child{page-break-after:auto;break-after:auto}.nag-page img{display:block;width:210mm;height:auto;margin:0;padding:0}</style></head><body>'+imgs+'</body></html>');
+      d.close();
+      var done=false;
+      function go(){if(done)return;done=true;try{ifr.contentWindow.focus();ifr.contentWindow.print();setMsg('Windows print dialog opened with exact PDF layout.','ok');}catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}setTimeout(function(){try{ifr.remove()}catch(_e){}},12000);}
+      ifr.onload=function(){setTimeout(go,500)}; setTimeout(go,1200);
+    }
+    function render(){
+      var old=document.getElementById('nagExactPdfRenderHostV150'); if(old)old.remove();
+      var host=document.createElement('div');
+      host.id='nagExactPdfRenderHostV150';
+      host.style.cssText='position:fixed;left:-20000px;top:0;width:800px;background:#fff;opacity:0.01;pointer-events:none;z-index:-1;overflow:visible';
+      host.innerHTML=stylesOf(html)+bodyOf(html);
+      document.body.appendChild(host);
+      var target=host.querySelector('.rsheet,.receipt,.invoice,.statement,#sheet')||host.firstElementChild||host;
+      return wait(450).then(function(){
+        return html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:true,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,800),windowHeight:Math.max(target.scrollHeight,1100)});
+      }).then(function(canvas){
+        try{host.remove();}catch(e){}
+        printImages(splitCanvas(canvas));
+      }).catch(function(e){try{host.remove();}catch(_e){} setMsg('Print failed: '+(e&&e.message?e.message:e),'err');});
+    }
+    try{
+      if(typeof ensureLibs==='function'){
+        ensureLibs().then(render).catch(function(){setMsg('Could not load PDF/print engine. Connect to internet once, then retry.','err');});
+      }else if(typeof html2canvas==='undefined'){
+        var sc=document.createElement('script');
+        sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        sc.onload=render; sc.onerror=function(){setMsg('Could not load print engine.','err');}; document.head.appendChild(sc);
+      }else{render();}
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+  }
+  var xlsxReady=false;
+  function ensureXlsx(){
+    if(xlsxReady)return Promise.resolve();
+    if(typeof XLSX!=='undefined'){xlsxReady=true;return Promise.resolve();}
+    setStatus('Loading Excel engine…','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js').then(function(){xlsxReady=true;setStatus('','');});
+  }
+  $('btnExportExcel').onclick=function(){
+    ensureXlsx().then(function(){
+      var data=expenses.map(function(e){
+        return {'Date':e.expense_date||'','Category':e.category||'Other','Description':e.description||'','Payment Method':e.payment_method||'','Amount':Number(e.amount)||0};
+      });
+      var ws=XLSX.utils.json_to_sheet(data);
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Expenses');
+      XLSX.writeFile(wb,'Expense-Report-'+todayStr()+'.xlsx');
+      setStatus('Excel file downloaded.','ok');
+    }).catch(function(){setStatus('Could not load Excel engine. Check internet connection.','err');});
+  };
+  $('btnPrintExpenses').onclick=function(){
+    var month=monthStr();
+    var rows=expenses.filter(function(e){return (e.expense_date||'').slice(0,7)===month;});
+    var css=document.querySelector('style').innerHTML;
+    var html='<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+buildExpenseReportSheet(rows,month)+'</body></html>';
+    nagExactPdfPrintV150(html,'Monthly-Expense-Report');
+  };
+  $('btnPdfMonth').onclick=function(){
+    var month=monthStr();
+    var rows=expenses.filter(function(e){return (e.expense_date||'').slice(0,7)===month;});
+    ensureLibs().then(function(){
+      var host=$('sheetHost');
+      host.innerHTML=buildExpenseReportSheet(rows, month);
+      return new Promise(function(r){setTimeout(r,250);}).then(function(){
+        return html2canvas(host.firstChild,{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+          var img=canvas.toDataURL('image/jpeg',0.92);
+          var jsPDF=window.jspdf.jsPDF;
+          var pdf=new jsPDF({unit:'pt',format:'a4'});
+          var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+          var iw=pw,ih=canvas.height*(pw/canvas.width);
+          if(ih<=ph){pdf.addImage(img,'JPEG',0,0,iw,ih);}else{var pos=0;while(pos<ih){pdf.addImage(img,'JPEG',0,-pos,iw,ih);pos+=ph;if(pos<ih)pdf.addPage();}}
+          pdf.save('Monthly-Expense-Report-'+month+'.pdf');
+          host.innerHTML='';
+          setStatus('PDF created — check your Downloads.','ok');
+        });
+      });
+    }).catch(function(){setStatus('Could not load PDF engine. Connect to internet once, then try again.','err');});
+  };
+
+  $('homeLink').onclick=function(e){e.preventDefault();if(window.parent!==window){window.parent.postMessage('home','*');}else{location.href='index.html';}};
+
+  window.addEventListener('load',initCloud);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+
+<script id="nag-desktop-clean-html-print-v148">
+(function(){
+  if(window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__) return;
+  window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__ = true;
+  function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+  function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+  function fullDoc(h, jobName){
+    h=stripScripts(h);
+    if(/<html[\s>]/i.test(h)){
+      h=h.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+      return h;
+    }
+    var css='';
+    try{css=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){}
+    return '<!doctype html><html><head><meta charset="utf-8"><title>'+String(jobName||'Print').replace(/[<>]/g,'')+'</title>'+css+'<style>@page{size:auto;margin:8mm}html,body{background:#fff!important;margin:0!important;padding:0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}</style></head><body>'+h+'</body></html>';
+  }
+  function printHtmlClean(html, jobName){
+    try{
+      var old=document.getElementById('nagDesktopPrintFrameV148'); if(old) old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagDesktopPrintFrameV148';
+      ifr.title=jobName||'Print';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var d=ifr.contentWindow.document; d.open(); d.write(fullDoc(html, jobName)); d.close();
+      var done=false;
+      function go(){
+        if(done)return; done=true;
+        try{ifr.contentWindow.focus(); ifr.contentWindow.print(); setMsg('Windows print dialog opened with clean PDF layout.','ok');}
+        catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+        setTimeout(function(){try{ifr.remove()}catch(_e){}},8000);
+      }
+      ifr.onload=function(){setTimeout(go,350)};
+      setTimeout(go,900);
+      return true;
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err'); return false;}
+  }
+  window.nagDesktopPrintHtmlClean = printHtmlClean;
+  window.nagDesktopCleanPrint = printHtmlClean;
+  window.printSheet = function(html, jobName){return printHtmlClean(html, jobName||document.title||'Document');};
+  try{ printSheet = window.printSheet; }catch(e){}
+  window.openPdfForPrint = function(pdf, filename){setMsg('Old PDF print flow is disabled. This module should use clean HTML print layout.','warn'); return false;};
+  window.openPdfForPrintUnified = window.openPdfForPrint;
+  window.nagOpenPdfWindowAndPrint = window.openPdfForPrint;
+  try{ openPdfForPrint = window.openPdfForPrint; }catch(e){}
+  try{ openPdfForPrintUnified = window.openPdfForPrintUnified; }catch(e){}
+})();
+</script>
+
+</body>
+</html>

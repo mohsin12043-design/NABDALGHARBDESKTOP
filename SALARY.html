@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb — Salary Slip</title>
+<style>
+  :root{--navy:#1a2b6b;--navy-d:#142156;--gold:#C8941F;--gold-l:#E0A823;--cream:#FBF7EC;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  .wrap{max-width:900px;margin:0 auto}
+  header.app{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+  header.app h1{font-size:17px;font-weight:700;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .btn{border:none;border-radius:8px;padding:10px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:40px}
+  .btn-navy{background:var(--navy);color:#fff}
+  .btn-gold{background:var(--gold);color:#fff}
+  .btn-ghost{background:#eef0f5;color:var(--navy)}
+  .btn-bad{background:var(--bad);color:#fff}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:0 0 10px;font-weight:700}
+  input,select{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px;font-family:inherit;background:#fdfdff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--navy);background:#fff}
+  input[readonly]{background:#f2f4f8;color:var(--muted)}
+  label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+  .field{margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .emp-info{background:var(--cream);border:1px solid #ecdcb5;border-radius:8px;padding:10px;font-size:12px;margin-bottom:10px;display:none}
+  .emp-info b{color:var(--navy)}
+  .net-box{background:#eef0f5;border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0;text-align:center}
+  .net-box .amt{font-size:26px;font-weight:800;color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;padding:6px 6px;border-bottom:2px solid var(--line)}
+  td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .icon-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:4px 6px}
+  .empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px}
+  #sheetHost{position:fixed;left:-99999px;top:0;width:800px}
+  /* slip */
+  .slip{background:#fff;font-family:Arial,sans-serif;color:#1f2330;max-width:760px;margin:0 auto}
+  .slip .topbar{height:10px;background:#1a2b6b}
+  .slip .goldbar{height:5px;background:#C8941F}
+  .slip .body{padding:22px 26px}
+  .slip .head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+  .slip .co-en{font-size:20px;font-weight:800;color:#1a2b6b;letter-spacing:.5px}
+  .slip .co-ar{direction:rtl;color:#C8941F;font-size:14px;font-weight:700}
+  .slip .co-mob{font-size:12px;color:#888;margin-top:2px}
+  .slip .doc-title{text-align:right}
+  .slip .doc-title .t{font-size:26px;font-weight:800;color:#1a2b6b;letter-spacing:1px}
+  .slip .doc-title .s{color:#C8941F;font-weight:700;font-size:12px}
+  .slip .sec{background:#1a2b6b;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:16px;display:inline-block;margin:14px 0 8px}
+  .slip .info-grid{border:1px solid #e2e5ee;border-radius:10px;overflow:hidden}
+  .slip .info-grid table{width:100%;border-collapse:collapse}
+  .slip .info-grid td{border:1px solid #eef0f5;padding:8px 10px;font-size:12px}
+  .slip .lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px}
+  .slip .val{font-weight:600;font-size:13px}
+  .slip .sal-table{width:100%;border-collapse:collapse;margin-top:8px}
+  .slip .sal-table th{background:#1a2b6b;color:#fff;text-align:left;padding:8px 10px;font-size:12px}
+  .slip .sal-table td{padding:8px 10px;border-bottom:1px solid #eef0f5;font-size:12px}
+  .slip .sal-table tr.total td{background:#FBF7EC;font-weight:800}
+  .slip .netbox{border:1px solid #e2e5ee;border-radius:12px;padding:18px;text-align:center;background:#fafbff}
+  .slip .netbox .k{font-size:11px;color:#888;text-transform:uppercase;font-weight:700}
+  .slip .netbox .big{font-size:34px;font-weight:800;color:#1a2b6b;line-height:1.1}
+  .slip .netbox .sar{font-size:16px}
+  .slip .netbox .note{font-size:11px;color:#666;border-top:2px solid #C8941F;padding-top:8px;margin-top:8px}
+  .slip .notebox{background:#fff9ec;border:1px solid #f0dfb8;border-radius:10px;padding:12px;font-size:11px;color:#555;margin-top:14px;display:flex;gap:10px}
+  .slip .notebox .i{width:26px;height:26px;border:2px solid #C8941F;border-radius:50%;color:#C8941F;text-align:center;line-height:22px;font-weight:800;flex:none}
+  .slip .sign{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #e2e5ee;border-radius:10px;margin-top:16px;overflow:hidden}
+  .slip .sign>div{padding:10px;text-align:center;border-right:1px solid #eef0f5}
+  .slip .sign>div:last-child{border-right:none}
+  .slip .sign .h{font-weight:700;font-size:12px;border-bottom:1px solid #eef0f5;padding-bottom:6px;margin-bottom:20px}
+  .slip .foot{text-align:center;font-size:10px;color:#888;margin-top:16px;border-top:1px solid #eef0f5;padding-top:8px}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <div><a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+      <h1>Salary Slip — قسيمة الراتب</h1>
+      <div class="sub">Auto-pulls basic salary &amp; pending advance from the employee</div></div>
+  </header>
+
+  <div class="card">
+    <h2>New Salary Slip</h2>
+    <div class="field">
+      <label>Employee</label>
+      <select id="f_emp"><option value="">— Select employee —</option></select>
+    </div>
+    <div class="emp-info" id="empInfo"></div>
+    <div class="grid2">
+      <div class="field"><label>Salary Month</label><input id="f_month" type="month"></div>
+      <div class="field"><label>Payment Method</label><select id="f_method"><option>Cash</option><option>Bank</option></select></div>
+    </div>
+    <div class="field"><label>Basic Salary (SAR) — from employee</label><input id="f_basic" type="number" step="0.01" readonly></div>
+    <div class="grid2">
+      <div class="field"><label>Allowances (+)</label><input id="f_allow" type="number" step="0.01" inputmode="decimal" value="0"></div>
+      <div class="field"><label>Bonus / Overtime (+)</label><input id="f_bonus" type="number" step="0.01" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="grid2">
+      <div class="field"><label>Other Deductions (−)</label><input id="f_deduct" type="number" step="0.01" inputmode="decimal" value="0"></div>
+      <div class="field"><label>Advance Deducted This Month (−)</label><input id="f_advded" type="number" step="0.01" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="field" style="font-size:12px;color:var(--muted)">Pending advance for this employee: <b id="pendTxt" style="color:var(--bad)">0.00</b> SAR
+      <button class="btn btn-ghost" id="btnFillAdv" style="min-height:auto;padding:4px 8px;font-size:11px;margin-left:6px">Deduct full pending</button></div>
+    <div class="net-box">Net Payable Salary<br><span class="amt" id="netAmt">0.00</span> SAR</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-navy" id="btnSave" style="flex:1;min-width:120px">Save Salary Slip</button>
+      <button class="btn btn-ghost" id="btnClear" style="flex:1;min-width:120px">Clear</button>
+    </div>
+  </div>
+
+  <div class="card" id="histCard" style="display:none">
+    <h2>Salary History <span id="histEmpName" style="color:var(--muted);font-weight:400"></span></h2>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr><th>Ref No</th><th>Month</th><th class="num">Basic</th><th class="num">Adv Cut</th><th class="num">Net</th><th></th></tr></thead>
+        <tbody id="histRows"></tbody>
+      </table>
+      <div class="empty" id="histEmpty" style="display:none">No salary slips yet for this employee.</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      <button class="btn btn-gold" id="btnPdf" style="flex:1;min-width:120px">📄 Slip PDF</button>
+      <button class="btn btn-ghost" id="btnPrint" style="flex:1;min-width:120px">🖨️ Print Slip</button>
+    </div>
+  </div>
+</div>
+<div id="sheetHost"></div>
+
+<script>
+  function $(id){return document.getElementById(id);}
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg;s.className=cls||'';}
+  function fmt(n){return (Math.round((n||0)*100)/100).toFixed(2);}
+  function monthLabel(m){if(!m)return '';var p=m.split('-');var names=['January','February','March','April','May','June','July','August','September','October','November','December'];return names[(parseInt(p[1],10)||1)-1]+' '+p[0];}
+
+  var SUPABASE_URL="https://vqtlibpsdxyvophzzkrx.supabase.co";
+  var SUPABASE_KEY="sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_";
+  var sb=null, ready=false;
+  var employees=[], advances=[], salaries=[];
+  var lastSavedRef=null;
+
+  function initCloud(){
+    try{
+      if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Offline — connect to internet to load data.','err');return;}
+      sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      ready=true;
+      loadAll();
+      sb.channel('sal-emp').on('postgres_changes',{event:'*',schema:'public',table:'nag_employees'},function(){loadEmployees();}).subscribe();
+      sb.channel('sal-adv').on('postgres_changes',{event:'*',schema:'public',table:'nag_advances'},function(){loadAdvances();}).subscribe();
+      sb.channel('sal-sal').on('postgres_changes',{event:'*',schema:'public',table:'nag_salaries'},function(){loadSalaries();}).subscribe();
+    }catch(e){setStatus('Offline — connect to internet to load data.','err');}
+  }
+  function loadAll(){loadEmployees();loadAdvances();loadSalaries();}
+  function loadEmployees(){
+    if(!ready)return;
+    sb.from('nag_employees').select('*').eq('status','active').order('emp_code',{ascending:true}).then(function(res){
+      if(res.error){setStatus('Could not load employees: '+res.error.message,'err');return;}
+      employees=res.data||[];fillEmpSelect();
+    });
+  }
+  function loadAdvances(){
+    if(!ready)return;
+    sb.from('nag_advances').select('*').then(function(res){
+      if(res.error)return;advances=res.data||[];onEmpChange();
+    });
+  }
+  function loadSalaries(){
+    if(!ready)return;
+    sb.from('nag_salaries').select('*').order('issue_date',{ascending:true}).then(function(res){
+      if(res.error){setStatus('Could not load salaries: '+res.error.message,'err');return;}
+      salaries=res.data||[];onEmpChange();
+    });
+  }
+  function fillEmpSelect(){
+    var cur=$('f_emp').value;
+    $('f_emp').innerHTML='<option value="">— Select employee —</option>'+employees.map(function(e){
+      return '<option value="'+e.id+'">'+(e.emp_code?e.emp_code+' · ':'')+(e.name_en||'')+'</option>';
+    }).join('');
+    if(cur)$('f_emp').value=cur;
+  }
+  function currentEmp(){var id=$('f_emp').value;return employees.find(function(e){return String(e.id)===String(id);});}
+  function empAdvances(empId){return advances.filter(function(a){return String(a.emp_id)===String(empId);});}
+  function empSalaries(empId){return salaries.filter(function(s){return String(s.emp_id)===String(empId);}).sort(function(a,b){return (a.issue_date||'').localeCompare(b.issue_date||'');});}
+  function pendingFor(empId){
+    var paid=0,ded=0;
+    empAdvances(empId).forEach(function(a){paid+=Number(a.advance_paid)||0;ded+=Number(a.deducted)||0;});
+    // advances already record their own deducted; salary slips add extra advance cuts
+    var salCut=0;empSalaries(empId).forEach(function(s){salCut+=Number(s.advance_deducted)||0;});
+    return paid-ded-salCut;
+  }
+
+  function onEmpChange(){
+    var e=currentEmp();
+    if(!e){$('empInfo').style.display='none';$('histCard').style.display='none';$('f_basic').value='';calcNet();return;}
+    $('empInfo').style.display='';
+    $('empInfo').innerHTML='<b>'+(e.name_en||'')+'</b>'+(e.name_ar?' · '+e.name_ar:'')+'<br>ID: '+(e.emp_code||'-')+' · '+(e.designation||'-');
+    $('f_basic').value=fmt(e.basic_salary);
+    var pend=pendingFor(e.id);
+    $('pendTxt').textContent=fmt(pend);
+    renderHistory(e);
+    calcNet();
+  }
+  function calcNet(){
+    var basic=parseFloat($('f_basic').value)||0;
+    var allow=parseFloat($('f_allow').value)||0;
+    var bonus=parseFloat($('f_bonus').value)||0;
+    var deduct=parseFloat($('f_deduct').value)||0;
+    var advded=parseFloat($('f_advded').value)||0;
+    var net=basic+allow+bonus-deduct-advded;
+    $('netAmt').textContent=fmt(net);
+    return net;
+  }
+  ['f_allow','f_bonus','f_deduct','f_advded'].forEach(function(id){document.addEventListener('input',function(ev){if(ev.target&&ev.target.id===id)calcNet();});});
+
+  function nextRef(empCode,month){
+    var ym=(month||new Date().toISOString().slice(0,7));
+    var prefix='NAG-SAL-'+ym+'-'+(empCode||'000')+'-';
+    var seq=salaries.filter(function(s){return (s.ref_no||'').indexOf(prefix)===0;}).length+1;
+    return prefix+String(seq).padStart(2,'0');
+  }
+  function saveSalary(){
+    var e=currentEmp();
+    if(!e){setStatus('Select an employee first.','err');return;}
+    var month=$('f_month').value||new Date().toISOString().slice(0,7);
+    var basic=parseFloat($('f_basic').value)||0;
+    var allow=parseFloat($('f_allow').value)||0;
+    var bonus=parseFloat($('f_bonus').value)||0;
+    var deduct=parseFloat($('f_deduct').value)||0;
+    var advded=parseFloat($('f_advded').value)||0;
+    var priorPending=pendingFor(e.id);
+    var net=basic+allow+bonus-deduct-advded;
+    var remainingAdvance=priorPending-advded;
+    var ref=nextRef(e.emp_code,month);
+    var row={
+      ref_no:ref,emp_id:e.id,emp_code:e.emp_code,emp_name:e.name_en,designation:e.designation||'',
+      salary_month:monthLabel(month),salary_month_key:month,
+      basic_salary:basic,allowances:allow,bonus:bonus,other_deductions:deduct,
+      advance_deducted:advded,pending_advance_before:priorPending,pending_advance_after:remainingAdvance,
+      net_payable:net,payment_method:$('f_method').value,
+      status:remainingAdvance>0.004?'Paid / Advance Pending':'Paid',
+      issue_date:new Date().toISOString()
+    };
+    if(!ready){setStatus('No internet connection right now.','err');return;}
+    setStatus('Saving…','warn');
+    sb.from('nag_salaries').insert(row).then(function(res){
+      if(res.error){setStatus('Save failed: '+res.error.message,'err');return;}
+      lastSavedRef=ref;
+      if(net>0)addExpense(net,'Salary','Salary '+(row.salary_month||'')+' - '+(e.name_en||e.emp_code||'')+' ('+ref+')',row.payment_method);
+      loadSalaries();
+      setStatus('Salary slip saved (Ref '+ref+'). Advance updated + added to Company Expenses. Generate the slip PDF below.','ok');
+    });
+  }
+
+  // Auto-post net salary to Company Expenses so P&L / expense reports stay accurate.
+  function addExpense(amount,category,desc,method){
+    if(!ready||!(amount>0))return;
+    var now=new Date();
+    var hh=now.getHours(),mm=String(now.getMinutes()).padStart(2,'0');
+    var ap=hh<12?'AM':'PM';var h12=hh%12;if(h12===0)h12=12;
+    sb.from('expenses').insert({
+      expense_date:now.toISOString().slice(0,10),
+      entry_time:h12+':'+mm+' '+ap,
+      category:category,
+      description:desc,
+      amount:amount,
+      payment_method:method||'Cash'
+    }).then(function(r){ /* silent: expense mirror */ });
+  }
+
+  function renderHistory(e){
+    var rows=empSalaries(e.id);
+    $('histCard').style.display='';
+    $('histEmpName').textContent='· '+(e.name_en||'');
+    $('histRows').innerHTML=rows.map(function(s){
+      return '<tr><td>'+(s.ref_no||'')+'</td><td>'+(s.salary_month||'')+'</td><td class="num">'+fmt(s.basic_salary)+'</td><td class="num">'+fmt(s.advance_deducted)+'</td><td class="num">'+fmt(s.net_payable)+'</td>'+
+        '<td><button class="icon-btn" data-slip="'+s.id+'" title="Slip PDF">📄</button> <button class="icon-btn" data-del="'+s.id+'" title="Delete">🗑️</button></td></tr>';
+    }).join('');
+    $('histEmpty').style.display=rows.length?'none':'block';
+    Array.prototype.forEach.call($('histRows').querySelectorAll('[data-slip]'),function(b){b.onclick=function(){genSlip(b.getAttribute('data-slip'),'pdf');};});
+    Array.prototype.forEach.call($('histRows').querySelectorAll('[data-del]'),function(b){b.onclick=function(){delSalary(b.getAttribute('data-del'));};});
+  }
+  function delSalary(id){
+    if(!confirm('Delete this salary slip? Pending advance will be recalculated and the matching Company Expense removed.'))return;
+    var sal=findSal(id);
+    sb.from('nag_salaries').delete().eq('id',id).then(function(res){
+      if(res.error){setStatus('Delete failed: '+res.error.message,'err');return;}
+      if(sal&&sal.ref_no)sb.from('expenses').delete().eq('category','Salary').like('description','%('+sal.ref_no+')%').then(function(){});
+      loadSalaries();setStatus('Salary slip + its expense deleted.','ok');
+    });
+  }
+
+  /* ---- Slip layout ---- */
+  function buildSlip(s,e){
+    var rows=empSalaries(e.id);
+    var histRows=rows.map(function(r){
+      return '<tr><td>'+(r.salary_month||'')+'</td><td>'+fmt(r.basic_salary)+'</td><td>'+fmt((Number(r.other_deductions)||0))+'</td><td>'+fmt(r.advance_deducted)+'</td><td>'+fmt(r.pending_advance_after)+'</td><td>'+fmt(r.net_payable)+'</td><td>'+(r.status||'')+'</td></tr>';
+    }).join('');
+    var d=s.issue_date?new Date(s.issue_date):new Date();
+    var dateStr=d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    var timeStr=d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    var totalDed=(Number(s.other_deductions)||0)+(Number(s.advance_deducted)||0);
+    return '<div class="slip"><div class="topbar"></div><div class="goldbar"></div><div class="body">'+
+      '<div class="head"><div><div class="co-en">NABD AL GHARB TRADING EST</div><div class="co-ar">مؤسسة نبض الغرب التجارية</div><div class="co-mob">Mobile: 0537859509</div></div>'+
+      '<div class="doc-title"><div class="t">SALARY SLIP</div><br><span class="s">'+(s.ref_no||'')+'</span></div></div>'+
+      '<div class="info-grid" style="margin-top:6px"><table>'+
+      '<tr><td><div class="lbl">Employee</div><div class="val">'+(e.name_en||'')+'</div></td><td><div class="lbl">Month</div><div class="val">'+(s.salary_month||'')+'</div></td></tr>'+
+      '<tr><td><div class="lbl">Employee ID</div><div class="val">'+(e.emp_code||'')+'</div></td><td><div class="lbl">Designation</div><div class="val">'+(e.designation||'')+'</div></td></tr></table></div>'+
+      '<span class="sec">SLIP INFORMATION</span>'+
+      '<div class="info-grid"><table><tr><td><div class="lbl">Reference No</div><div class="val">'+(s.ref_no||'')+'</div></td><td><div class="lbl">Issue Date</div><div class="val">'+dateStr+'</div></td><td><div class="lbl">Issue Time</div><div class="val">'+timeStr+'</div></td><td><div class="lbl">Pay Period</div><div class="val">'+(s.salary_month||'')+'</div></td><td><div class="lbl">Payment Status</div><div class="val">'+(s.status||'')+'</div></td></tr></table></div>'+
+      '<div style="display:flex;gap:16px;margin-top:14px;align-items:stretch">'+
+      '<div style="flex:1.4"><span class="sec">SALARY DETAILS</span>'+
+      '<table class="sal-table"><thead><tr><th>Description</th><th style="text-align:right">Amount (SAR)</th></tr></thead><tbody>'+
+      '<tr><td>Basic Salary</td><td style="text-align:right">'+fmt(s.basic_salary)+'</td></tr>'+
+      (Number(s.allowances)?'<tr><td>Allowances</td><td style="text-align:right">'+fmt(s.allowances)+'</td></tr>':'')+
+      (Number(s.bonus)?'<tr><td>Bonus / Overtime</td><td style="text-align:right">'+fmt(s.bonus)+'</td></tr>':'')+
+      '<tr><td>Deductions</td><td style="text-align:right">-'+fmt(s.other_deductions)+'</td></tr>'+
+      '<tr><td>Advance Deducted This Month</td><td style="text-align:right">-'+fmt(s.advance_deducted)+'</td></tr>'+
+      '<tr><td>Pending Advance Balance</td><td style="text-align:right">'+fmt(s.pending_advance_after)+'</td></tr>'+
+      '<tr class="total"><td>Net Payable Salary</td><td style="text-align:right">'+fmt(s.net_payable)+'</td></tr>'+
+      '</tbody></table></div>'+
+      '<div style="flex:1"><div class="netbox" style="margin-top:34px"><div class="k">NET PAYABLE</div><div class="big"><span class="sar">SAR</span><br>'+fmt(s.net_payable)+'</div><div class="note">For the month of '+(s.salary_month||'').split(' ')[0]+'</div></div></div>'+
+      '</div>'+
+      '<span class="sec">SALARY HISTORY</span>'+
+      '<table class="sal-table"><thead><tr><th>Month</th><th>Basic</th><th>Deduction</th><th>Advance Cut</th><th>Pending Advance</th><th>Net Payable</th><th>Status</th></tr></thead><tbody>'+(histRows||'<tr><td colspan="7">No history</td></tr>')+'</tbody></table>'+
+      '<div class="notebox"><div class="i">i</div><div><b>Advance Salary Handling Note</b><br>If the employee requests that the advance should not be deducted this month, set Advance Deducted This Month to 0.00, keep the Pending Advance Balance visible, and carry it forward to the next month.</div></div>'+
+      '<div class="sign"><div><div class="h">Prepared By</div><b>NABD AL GHARB TRADING EST</b></div><div><div class="h">Employee Signature</div></div><div><div class="h">Company Stamp</div></div></div>'+
+      '<div class="foot">This is a computer generated salary slip. All amounts are in SAR.</div>'+
+      '</div></div>';
+  }
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var libsReady=false;
+  // The app shell (parent) already bundles jspdf + html2canvas offline in web/vendor.
+  // Borrow them directly so PDF works inside the APK with NO internet needed.
+  function borrowFromParent(){
+    try{
+      var p=window.parent;
+      if(p&&p!==window){
+        if(!window.jspdf&&p.jspdf)window.jspdf=p.jspdf;
+        if(!window.html2canvas&&p.html2canvas)window.html2canvas=p.html2canvas;
+      }
+    }catch(e){}
+  }
+  function haveLibs(){return !!(window.jspdf&&window.jspdf.jsPDF&&window.html2canvas);}
+  function parentBase(){try{var u=window.parent.location.href;return u.replace(/[^/]*$/,'');}catch(e){return '';}}
+  function ensureLibs(){
+    borrowFromParent();
+    if(libsReady||haveLibs()){libsReady=true;return Promise.resolve();}
+    setStatus('Loading PDF engine…','warn');
+    var base=parentBase();
+    var jspdfSrc=base?base+'vendor/jspdf.umd.min.js':'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    var h2cSrc=base?base+'vendor/html2canvas.min.js':'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    var p=Promise.resolve();
+    if(!(window.jspdf&&window.jspdf.jsPDF))p=p.then(function(){return loadScript(jspdfSrc).catch(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');});});
+    if(!window.html2canvas)p=p.then(function(){return loadScript(h2cSrc).catch(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');});});
+    return p.then(function(){borrowFromParent();libsReady=haveLibs();setStatus('','');});
+  }
+  function findSal(id){return salaries.find(function(s){return String(s.id)===String(id);});}
+  function buildSlipPdf(sal){
+    var e=employees.find(function(x){return String(x.id)===String(sal.emp_id);})||currentEmp();
+    if(!e){setStatus('Employee not found for this slip.','err');return Promise.reject('no_emp');}
+    return ensureLibs().then(function(){
+      var host=$('sheetHost');host.innerHTML=buildSlip(sal,e);
+      return new Promise(function(r){setTimeout(r,300);}).then(function(){
+        var target=host.firstChild;target.style.background='#fff';
+        return html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:true,windowWidth:820}).then(function(canvas){
+          var img=canvas.toDataURL('image/jpeg',0.92);var jsPDF=window.jspdf.jsPDF;var pdf=new jsPDF({unit:'pt',format:'a4'});
+          var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+          var iw=pw,ih=canvas.height*(pw/canvas.width);
+          if(ih<=ph){pdf.addImage(img,'JPEG',0,0,iw,ih);}else{var pos=0;while(pos<ih){pdf.addImage(img,'JPEG',0,-pos,iw,ih);pos+=ph;if(pos<ih)pdf.addPage();}}
+          var printHtml=target.outerHTML;host.innerHTML='';
+          return {pdf:pdf,html:printHtml,filename:'Salary-'+(sal.ref_no||'slip')+'.pdf'};
+        });
+      });
+    });
+  }
+
+
+  function desktopPrintHtml(html,title){
+    var old=document.getElementById('nagDesktopModulePrintFrameV157');if(old)old.remove();
+    var f=document.createElement('iframe');f.id='nagDesktopModulePrintFrameV157';f.style.cssText='position:fixed;left:-20000px;top:0;width:900px;height:1200px;border:0;background:#fff';document.body.appendChild(f);
+    var d=f.contentWindow.document;d.open();d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+String(title||'Print')+'</title><style>@page{size:A4;margin:10mm}html,body{margin:0;background:#fff}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}*{box-sizing:border-box}</style></head><body>'+html+'</body></html>');d.close();
+    setTimeout(function(){try{f.contentWindow.focus();f.contentWindow.print()}catch(e){}setTimeout(function(){try{f.remove()}catch(e){}},3000)},350);
+  }
+
+
+  function desktopPrintPdfExact(pdf,title){
+    var old=document.getElementById('nagDesktopExactPdfPrintFrameV158');if(old)old.remove();
+    var url=pdf.output('bloburl');
+    var f=document.createElement('iframe');f.id='nagDesktopExactPdfPrintFrameV158';
+    f.style.cssText='position:fixed;left:-20000px;top:0;width:900px;height:1200px;border:0;background:#fff';
+    f.src=url;document.body.appendChild(f);
+    var done=false;
+    function go(){if(done)return;done=true;try{f.contentWindow.focus();f.contentWindow.print();}catch(e){try{window.open(url,'_blank');}catch(_e){}}
+      setTimeout(function(){try{URL.revokeObjectURL(url)}catch(e){}try{f.remove()}catch(e){}},10000);
+    }
+    f.onload=function(){setTimeout(go,700)};setTimeout(go,1800);
+  }
+
+  function sendPdfToApp(res,action,moduleName,successMsg){
+    try{
+      if(action==='print'){
+        desktopPrintPdfExact(res.pdf,moduleName);
+      }else{
+        res.pdf.save(res.filename);
+      }
+      setStatus(successMsg,'ok');return true;
+    }catch(e){setStatus('PDF action failed: '+(e&&e.message?e.message:e),'err');return false;}
+  }
+
+  function genSlip(id,mode){
+    var sal=id?findSal(id):(lastSavedRef?salaries.find(function(s){return s.ref_no===lastSavedRef;}):null);
+    if(!sal){var e=currentEmp();if(e){var r=empSalaries(e.id);sal=r[r.length-1];}}
+    if(!sal){setStatus('Save a salary slip first, then generate the PDF.','err');return;}
+    buildSlipPdf(sal).then(function(res){
+      if(mode==='print'){
+        sendPdfToApp(res,'print','Salary Slip','Salary Slip sent to print.');
+      }else{
+        sendPdfToApp(res,'open','Salary Slip','Salary Slip PDF ready.');
+      }
+    }).catch(function(err){if(err!=='no_emp')setStatus('Could not create slip PDF. Connect to internet once, then retry.','err');});
+  }
+
+  $('f_emp').onchange=onEmpChange;
+  $('btnFillAdv').onclick=function(){var e=currentEmp();if(!e)return;$('f_advded').value=fmt(Math.max(pendingFor(e.id),0));calcNet();};
+  $('btnSave').onclick=saveSalary;
+  $('btnClear').onclick=function(){$('f_allow').value='0';$('f_bonus').value='0';$('f_deduct').value='0';$('f_advded').value='0';calcNet();};
+  $('btnPdf').onclick=function(){genSlip(null,'pdf');};
+  $('btnPrint').onclick=function(){genSlip(null,'print');};
+  $('homeLink').onclick=function(e){e.preventDefault();if(window.parent!==window){window.parent.postMessage('home','*');}else{location.href='index.html';}};
+
+  $('f_month').value=new Date().toISOString().slice(0,7);
+  window.addEventListener('load',initCloud);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

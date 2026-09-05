@@ -1,0 +1,63 @@
+NABD AL-GHARB FINAL SOURCE CHECK
+======================================
+[PASS] Version consistency: 2.0.5
+[PASS] Required application files present
+[PASS] Auto updater production values are configured
+[PASS] VEHICLE_STOCK module embedded
+[PASS] MINI_STORE module embedded
+[PASS] STOCK_CONTROL module embedded
+[PASS] Inline JavaScript syntax passed for 13 scripts
+[PASS] Vehicle and Mini Store data/sync keys present
+[PASS] Settlement auto quantity function
+[PASS] Settlement remaining quantity text
+[PASS] Vehicle Tax Invoice title
+[PASS] Vehicle Cash Invoice option
+[PASS] Vehicle Credit Invoice option
+[PASS] Vehicle payment status field
+[PASS] Vehicle customer VAT field
+[PASS] Vehicle ZATCA QR
+[PASS] Vehicle invoice amount in words
+[PASS] Vehicle bill company Tax Invoice CSS
+[PASS] Vehicle bill history persistence
+[PASS] Vehicle Bill has no Quotation option
+[PASS] Mini Store settlement auto quantity function
+[PASS] Mini Store available quantity field label
+[PASS] Mini Store product model label
+[PASS] Mini Store available quantity help text
+[PASS] Mini Store product options show remaining stock
+[PASS] Mini Store quantity maximum follows available stock
+[PASS] Mini Store partial adjustment guidance
+[PASS] Mini Store product change refreshes quantity
+[PASS] Mini Store Tax Invoice title
+[PASS] Mini Store Cash Invoice option
+[PASS] Mini Store Credit Invoice option
+[PASS] Mini Store payment status field
+[PASS] Mini Store customer VAT field
+[PASS] Mini Store ZATCA QR
+[PASS] Mini Store invoice amount in words
+[PASS] Mini Store bill company Tax Invoice CSS
+[PASS] Mini Store bill history persistence
+[PASS] Mini Store bill uses assigned cashier
+[PASS] Mini Store A4 print mode
+[PASS] Mini Store Bill has no Quotation option
+[PASS] Movement documents use official A4 paper width
+[PASS] Movement documents use official company cream panel
+[PASS] Movement documents use company gold headings
+[PASS] Movement documents include bilingual company footer
+[PASS] Settlement report uses company paper class
+[PASS] Transfer return damage missing document generator
+[PASS] Correction and cancellation document generator
+[PASS] Settlement PDF generator
+[PASS] Official company VAT number
+[PASS] Official company CR number
+[PASS] Official company national address
+[PASS] Tax Invoice vehicle source selection
+[PASS] Tax Invoice vehicle stock validation
+[PASS] Tax Invoice vehicle stock deduction
+[PASS] Tax Invoice vehicle sales history
+[PASS] Tax Invoice Mini Store source selection
+[PASS] Tax Invoice Mini Store stock deduction
+[PASS] Tax Invoice Mini Store sales history
+
+Result: 58 passed, 0 warnings, 0 failures
+
