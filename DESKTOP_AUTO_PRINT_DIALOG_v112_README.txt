@@ -1,1 +1,0 @@
-Print buttons now open the generated PDF in a printer window and attempt to show the Windows print dialog automatically. If the popup is blocked, the PDF is saved in Downloads and can be printed manually.
