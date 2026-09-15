@@ -1,0 +1,1 @@
+v157: Fixed PDF download and native print for Employee, Salary Slip, Advance Slip and Commercial Invoice only. Existing modules were not changed. PDF buttons now download directly. Print buttons use clean A4 iframe print layouts and open the Windows print dialog.

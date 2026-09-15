@@ -1,0 +1,7 @@
+Customer Ledger company details fix
+
+Customer Ledger seller address fields now load the shared English and Arabic company addresses saved in Settings.
+Customer Ledger seller phone field now loads the shared company mobile number saved in Settings.
+Customer Ledger PDF and Print statements use these shared values.
+The company mobile Show or Hide setting is respected in Customer Ledger PDF and Print.
+All other embedded modules are unchanged from desktop v215.

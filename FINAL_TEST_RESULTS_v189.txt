@@ -1,0 +1,27 @@
+NABD AL-GHARB DESKTOP v1.8.9 TEST RESULTS
+
+PASS  Version consistency across package.json, Cargo.toml and tauri.conf.json
+PASS  Required application files present
+PASS  Mini Store module embedded and decodes correctly
+PASS  Mini Store JavaScript syntax
+PASS  Automatic MTX, MRT, MDM and MMS reference generation
+PASS  Existing movement reference backfill
+PASS  Clickable Mini Store movement history references
+PASS  Clickable movement references in Settlement Report
+PASS  History movement filter
+PASS  Current Mini Store balance in movement history
+PASS  Movement company PDF preview
+PASS  Print / Save PDF action
+PASS  Product, quantity and before/after balances in movement document
+PASS  Warehouse effect in movement document
+PASS  Cashier assigned Mini Store permission guard
+PASS  New transfer records store references and balances
+PASS  Return, damage and missing records store references and balances
+PASS  Existing Vehicle Stock v1.8.7 features remain embedded
+PASS  Existing Mini Store cashier scope v1.8.8 remains present
+
+FINAL SOURCE CHECK
+39 passed, 0 warnings, 0 failures
+
+WINDOWS INSTALLER
+Not built in this environment. Build once after all Mini Store modules are complete.

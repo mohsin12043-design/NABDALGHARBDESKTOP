@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nabd Al-Gharb — Sales Reports</title>
+<style>
+  :root{--navy:#1a2b6b;--navy-d:#142156;--gold:#C8941F;--gold-l:#E0A823;--cream:#FBF7EC;--ink:#1f2330;--muted:#5b6373;--line:#d7dbe6;--bg:#eef0f5;--panel:#fff;--bad:#b3261e;--bad-bg:#fde8e7;--warn:#9E7415;--warn-bg:#fff4e0;--ok:#1f7a3d;--ok-bg:#e7f5ea}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);padding:10px;font-size:14px;line-height:1.4;margin:0}
+  #status{font-size:12px;padding:8px 12px;border-radius:8px;margin-bottom:10px;display:none}
+  #status.ok{display:block;background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c1}
+  #status.warn{display:block;background:var(--warn-bg);color:var(--warn);border:1px solid #ecd8a0}
+  #status.err{display:block;background:var(--bad-bg);color:var(--bad);border:1px solid #f3c2bf}
+  .wrap{max-width:900px;margin:0 auto}
+  header.app{margin-bottom:12px}
+  header.app h1{font-size:17px;font-weight:700;color:var(--navy);margin:0}
+  header.app .sub{font-size:11px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}
+  .stat .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+  .stat .val{font-size:19px;font-weight:800;color:var(--navy)}
+  .stat .sub2{font-size:11px;color:var(--muted);margin-top:2px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--navy);margin:0 0 10px;font-weight:700}
+  .btn{border:none;border-radius:8px;padding:11px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;min-height:42px}
+  .btn-gold{background:var(--gold);color:#fff}
+  .pdf-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .pdf-btns .btn{flex:1;min-width:150px}
+  #sheetHost{position:fixed;left:-9999px;top:0;width:800px}
+  .rsheet{background:#fff;padding:24px;font-family:Arial,sans-serif;color:#222}
+  .rsheet h1{font-size:20px;color:var(--navy);margin:0 0 2px}
+  .rsheet .rsub{font-size:12px;color:#666;margin-bottom:14px}
+  .rsheet table{width:100%;border-collapse:collapse;font-size:12px}
+  .rsheet th{background:#eef0f5;text-align:left;padding:6px 8px;border:1px solid #ccc}
+  .rsheet td{padding:6px 8px;border:1px solid #ccc}
+  .rsheet tfoot td{font-weight:800;background:#f7f7f7}
+  .filters{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .filters button{flex:1;min-width:90px;border:none;border-radius:8px;padding:9px 10px;font-size:12.5px;font-weight:600;cursor:pointer;background:#eef0f5;color:var(--navy)}
+  .filters button.active{outline:2px solid var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;padding:6px;border-bottom:2px solid var(--line)}
+  td{padding:7px 6px;border-bottom:1px solid var(--line)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .type-pill{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+  .type-cash{background:var(--ok-bg);color:var(--ok)}
+  .type-credit{background:var(--bad-bg);color:var(--bad)}
+  .type-quote{background:var(--warn-bg);color:var(--warn)}
+  .empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:13px}
+</style>
+</head>
+<body>
+<script>(function(){var _set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){_set.call(this,k,v);try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'nag-sync',key:k,value:v},'*');}}catch(e){}};})();</script>
+
+<div class="wrap">
+  <div id="status"></div>
+  <header class="app">
+    <a href="#" id="homeLink" style="color:var(--navy);font-weight:700;text-decoration:none;font-size:13px;display:inline-block;margin-bottom:4px">‹ Home</a>
+    <h1>Sales Reports — تقارير المبيعات</h1>
+    <div class="sub">Nabd Al-Gharb Trading Est. · cloud-synced across devices</div>
+  </header>
+
+  <div class="cards">
+    <div class="stat"><div class="lbl">Today's Sales</div><div class="val" id="cTodayTotal">0.00</div><div class="sub2"><span id="cTodayCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">This Week</div><div class="val" id="cWeekTotal">0.00</div><div class="sub2"><span id="cWeekCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">This Month</div><div class="val" id="cMonthTotal">0.00</div><div class="sub2"><span id="cMonthCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">This Year</div><div class="val" id="cYearTotal">0.00</div><div class="sub2"><span id="cYearCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">Total VAT Collected (All-Time)</div><div class="val" id="cVatTotal">0.00</div><div class="sub2">Cash + Credit invoices only</div></div>
+    <div class="stat"><div class="lbl">All-Time Sales</div><div class="val" id="cAllTotal">0.00</div><div class="sub2"><span id="cAllCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">Total Discount (All-Time)</div><div class="val" id="cDiscTotal">0.00</div></div>
+    <div class="stat"><div class="lbl">Cash Sales (All-Time)</div><div class="val" id="cCashTotal">0.00</div><div class="sub2"><span id="cCashCount">0</span> invoice(s)</div></div>
+    <div class="stat"><div class="lbl">Credit Sales (All-Time)</div><div class="val" id="cCreditTotal">0.00</div><div class="sub2"><span id="cCreditCount">0</span> invoice(s)</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Top Customers &amp; Top Selling Items</h2>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px"><b style="font-size:12px;color:var(--navy)">Top 10 Customers (by total sales, all devices)</b><ol id="topCustomers" style="margin:8px 0 0 18px;font-size:12.5px"></ol></div>
+      <div style="flex:1;min-width:220px"><b style="font-size:12px;color:var(--navy)">Top 10 Selling Items (this device only)</b><ol id="topItems" style="margin:8px 0 0 18px;font-size:12.5px"></ol></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Charts</h2>
+    <canvas id="chartMonthly" height="180"></canvas>
+    <div style="height:16px"></div>
+    <canvas id="chartDaily" height="180"></canvas>
+    <div style="height:16px"></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:220px"><canvas id="chartCashCredit" height="200"></canvas></div>
+      <div style="flex:1;min-width:220px"><canvas id="chartTopItems" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Custom Date Range Report</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:130px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">From</label><input id="rangeStart" type="date" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px"></div>
+      <div style="flex:1;min-width:130px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">To</label><input id="rangeEnd" type="date" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:14px"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button class="btn btn-gold" id="btnPdfRange" style="flex:1;min-width:140px">📄 Generate PDF for Range</button>
+      <button class="btn btn-ghost" id="btnPrintRange" style="flex:1;min-width:140px">🖨️ Print Range</button>
+      <button class="btn btn-gold" id="btnExcelRange" style="flex:1;min-width:140px">📊 Export Range to Excel</button>
+      <button class="btn" id="btnFilterRange" style="flex:1;min-width:140px;background:#eef0f5;color:var(--navy)">🔎 Show in Table Below</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Download Reports</h2>
+    <div class="pdf-btns">
+      <button class="btn btn-gold" id="btnPdfToday">📄 Today's Report PDF</button>
+      <button class="btn btn-ghost" id="btnPrintToday">🖨️ Print Today</button>
+      <button class="btn btn-gold" id="btnPdfWeek">📄 This Week's Report PDF</button>
+      <button class="btn btn-ghost" id="btnPrintWeek">🖨️ Print Week</button>
+      <button class="btn btn-gold" id="btnPdfMonth">📄 This Month's Report PDF</button>
+      <button class="btn btn-gold" id="btnPdfVat">📄 This Month's VAT Report PDF</button>
+      <button class="btn btn-ghost" id="btnPrintVat">🖨️ Print VAT Report</button>
+      <button class="btn btn-ghost" id="btnPrintMonth" style="width:100%">🖨️ Print This Month's Report</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Invoice History</h2>
+    <div class="filters">
+      <button class="active" id="fAll">All</button>
+      <button id="fToday">Today</button>
+      <button id="fWeek">This Week</button>
+      <button id="fMonth">This Month</button>
+      <button id="fYear">This Year</button>
+      <button id="fCash">Cash Only</button>
+      <button id="fCredit">Credit Only</button>
+    </div>
+    <div style="margin-top:8px"><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:3px">Filter by Customer</label>
+      <select id="fCustomer" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:13px"><option value="">All Customers</option></select>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Date</th><th>Invoice #</th><th>Customer</th><th>Type</th><th class="num">VAT</th><th class="num">Total</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty" style="display:none">No sales recorded yet.</div>
+    </div>
+  </div>
+</div>
+<div id="sheetHost"></div>
+
+<script>
+  function $(id){return document.getElementById(id);}
+  function setStatus(msg,cls){var s=$('status');s.textContent=msg;s.className=cls||'';}
+  function fmt(n){return (Math.round((n||0)*100)/100).toFixed(2);}
+  var COMPANY_HEADER_HTML='<div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid #1a2b6b;font-size:11px;line-height:1.6">'+
+    '<div><b style="font-size:14px">NABD AL-GHARB TRADING EST.</b><br>P.O. Box No. 37, North Zone, Turaif, Saudi Arabia<br>VAT No: 311157282200003<br>CR: 3451102031 &nbsp; Tel: 0537859509<br>National Address: 7027457311</div>'+
+    '<div style="text-align:right;direction:rtl"><b style="font-size:14px">مؤسسة نبض الغرب التجارية</b><br>ص.ب 37 المنطقة الشمالية، طريف، المملكة العربية السعودية<br>الرقم الضريبي: 311157282200003<br>السجل التجاري: 3451102031 &nbsp; هاتف: 0537859509<br>العنوان الوطني: 7027457311</div>'+
+    '</div>';
+
+  var SUPABASE_URL="https://vqtlibpsdxyvophzzkrx.supabase.co";
+  var SUPABASE_KEY="sb_publishable_pu0PnLzHJ1UR0md_RlWtrg_F4t9Fxl_";
+  var sb=null, ready=false;
+  var sales=[];
+  var filter='all';
+
+  function initCloud(){
+    try{
+      if(typeof supabase==='undefined'||!supabase.createClient){setStatus('Offline — connect to internet to load reports.','err');return;}
+      sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      ready=true;
+      loadSales();
+      sb.channel('sales-changes').on('postgres_changes',{event:'*',schema:'public',table:'sales'},function(){loadSales();}).subscribe();
+    }catch(e){setStatus('Offline — connect to internet to load reports.','err');}
+  }
+
+  function loadSales(){
+    if(!ready)return;
+    setStatus('Syncing…','warn');
+    sb.from('sales').select('*').order('invoice_date',{ascending:false}).order('created_at',{ascending:false}).then(function(res){
+      if(res.error){setStatus('Could not load reports: '+res.error.message,'err');return;}
+      sales=res.data||[];
+      setStatus('','');
+      renderStats();
+      render();
+    });
+  }
+
+  function todayStr(){var d=new Date();return d.toISOString().slice(0,10);}
+  function monthStr(){return todayStr().slice(0,7);}
+  function weekAgoStr(){var d=new Date();d.setDate(d.getDate()-6);return d.toISOString().slice(0,10);}
+  function yearStr(){return todayStr().slice(0,4);}
+
+  function renderStats(){
+    var today=todayStr(), month=monthStr(), weekStart=weekAgoStr(), year=yearStr();
+    var real=sales.filter(function(s){return s.itype!=='quote';});
+
+    var todayRows=real.filter(function(s){return s.invoice_date===today;});
+    var weekRows=real.filter(function(s){return s.invoice_date>=weekStart&&s.invoice_date<=today;});
+    var monthRows=real.filter(function(s){return (s.invoice_date||'').slice(0,7)===month;});
+    var yearRows=real.filter(function(s){return (s.invoice_date||'').slice(0,4)===year;});
+
+    $('cTodayTotal').textContent=fmt(todayRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cTodayCount').textContent=todayRows.length;
+
+    $('cWeekTotal').textContent=fmt(weekRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cWeekCount').textContent=weekRows.length;
+
+    $('cMonthTotal').textContent=fmt(monthRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cMonthCount').textContent=monthRows.length;
+
+    $('cYearTotal').textContent=fmt(yearRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cYearCount').textContent=yearRows.length;
+
+    $('cVatTotal').textContent=fmt(real.reduce(function(a,s){return a+Number(s.vat_amount||0);},0));
+
+    $('cAllTotal').textContent=fmt(real.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cAllCount').textContent=real.length;
+
+    $('cDiscTotal').textContent=fmt(real.reduce(function(a,s){return a+Number(s.discount||0);},0));
+
+    var cashRows=real.filter(function(s){return s.itype==='cash';});
+    var creditRows=real.filter(function(s){return s.itype==='credit';});
+    $('cCashTotal').textContent=fmt(cashRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cCashCount').textContent=cashRows.length;
+    $('cCreditTotal').textContent=fmt(creditRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0));
+    $('cCreditCount').textContent=creditRows.length;
+
+    populateCustomerFilter(real);
+    renderTopLists(real);
+    ensureChartLib().then(function(){renderCharts(real,cashRows,creditRows);});
+  }
+
+  function populateCustomerFilter(real){
+    var sel=$('fCustomer');
+    var current=sel.value;
+    var names=real.reduce(function(set,s){var n=(s.customer_name||'').trim();if(n&&set.indexOf(n)<0)set.push(n);return set;},[]).sort();
+    sel.innerHTML='<option value="">All Customers</option>'+names.map(function(n){return '<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>';}).join('');
+    sel.value=current;
+  }
+
+  function renderTopLists(real){
+    var byCust={};
+    real.forEach(function(s){
+      var n=(s.customer_name||'').trim()||'(No name)';
+      byCust[n]=(byCust[n]||0)+Number(s.grand_total||0);
+    });
+    var custArr=Object.keys(byCust).map(function(n){return {name:n,total:byCust[n]};}).sort(function(a,b){return b.total-a.total;}).slice(0,10);
+    $('topCustomers').innerHTML=custArr.map(function(c){return '<li>'+c.name+' — <b>'+fmt(c.total)+' SAR</b></li>';}).join('')||'<li style="color:var(--muted)">No data yet.</li>';
+
+    var hist=[];try{var r=localStorage.getItem('nag_invoice_history_v1');hist=r?JSON.parse(r):[];}catch(e){hist=[];}
+    var byItem={};
+    hist.forEach(function(h){
+      if(h.itype==='quote')return;
+      (h.rows||[]).forEach(function(row){
+        var key=(row.code?row.code+' — ':'')+(row.desc||row.descAr||'Item');
+        byItem[key]=(byItem[key]||0)+(parseFloat(row.qty)||0);
+      });
+    });
+    var itemArr=Object.keys(byItem).map(function(k){return {name:k,qty:byItem[k]};}).sort(function(a,b){return b.qty-a.qty;}).slice(0,10);
+    $('topItems').innerHTML=itemArr.map(function(i){return '<li>'+i.name+' — <b>'+i.qty+'</b> sold</li>';}).join('')||'<li style="color:var(--muted)">No invoice line-items saved on this device yet.</li>';
+    window._topItemArr=itemArr;
+  }
+
+  function loadScriptOnce(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var chartLibReady=false;
+  function ensureChartLib(){
+    if(chartLibReady||typeof Chart!=='undefined'){chartLibReady=true;return Promise.resolve();}
+    return loadScriptOnce('https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js').then(function(){chartLibReady=true;}).catch(function(){});
+  }
+
+  var chartMonthly=null, chartDaily=null, chartCashCredit=null, chartTopItems=null;
+  function renderCharts(real,cashRows,creditRows){
+    if(typeof Chart==='undefined')return;
+    var today=new Date();
+    var months=[];
+    for(var i=11;i>=0;i--){var m=new Date(today.getFullYear(),today.getMonth()-i,1);months.push(m.getFullYear()+'-'+String(m.getMonth()+1).padStart(2,'0'));}
+    var byMonth={};months.forEach(function(m){byMonth[m]=0;});
+    real.forEach(function(s){var m=(s.invoice_date||'').slice(0,7);if(m in byMonth)byMonth[m]+=Number(s.grand_total||0);});
+    var monthlyVals=months.map(function(m){return byMonth[m];});
+    if(chartMonthly)chartMonthly.destroy();
+    chartMonthly=new Chart($('chartMonthly'),{type:'bar',data:{labels:months,datasets:[{label:'Monthly Sales (SAR)',data:monthlyVals,backgroundColor:'#1a2b6b'}]},options:{responsive:true,plugins:{title:{display:true,text:'Monthly Sales — last 12 months'},legend:{display:false}}}});
+
+    var days=[];
+    for(var d=29;d>=0;d--){var dt=new Date();dt.setDate(dt.getDate()-d);days.push(dt.toISOString().slice(0,10));}
+    var byDay={};days.forEach(function(dd){byDay[dd]=0;});
+    real.forEach(function(s){if(s.invoice_date in byDay)byDay[s.invoice_date]+=Number(s.grand_total||0);});
+    var dailyVals=days.map(function(dd){return byDay[dd];});
+    if(chartDaily)chartDaily.destroy();
+    chartDaily=new Chart($('chartDaily'),{type:'line',data:{labels:days,datasets:[{label:'Daily Sales (SAR)',data:dailyVals,borderColor:'#C8941F',backgroundColor:'#C8941F',tension:.3}]},options:{responsive:true,plugins:{title:{display:true,text:'Daily Sales — last 30 days'},legend:{display:false}}}});
+
+    var cashTotal=cashRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0);
+    var creditTotal=creditRows.reduce(function(a,s){return a+Number(s.grand_total||0);},0);
+    if(chartCashCredit)chartCashCredit.destroy();
+    chartCashCredit=new Chart($('chartCashCredit'),{type:'pie',data:{labels:['Cash','Credit'],datasets:[{data:[cashTotal,creditTotal],backgroundColor:['#1f7a3d','#b3261e']}]},options:{responsive:true,plugins:{title:{display:true,text:'Cash vs Credit Sales'}}}});
+
+    var topItems=(window._topItemArr||[]).slice(0,10);
+    if(chartTopItems)chartTopItems.destroy();
+    chartTopItems=new Chart($('chartTopItems'),{type:'bar',data:{labels:topItems.map(function(i){return i.name.length>18?i.name.slice(0,18)+'…':i.name;}),datasets:[{label:'Qty Sold',data:topItems.map(function(i){return i.qty;}),backgroundColor:'#C8941F'}]},options:{indexAxis:'y',responsive:true,plugins:{title:{display:true,text:'Top 10 Selling Items (this device)'},legend:{display:false}}}});
+  }
+
+  function render(){
+    var today=todayStr(), month=monthStr(), weekStart=weekAgoStr(), year=yearStr();
+    var rs=$('rangeStart').value, re=$('rangeEnd').value;
+    var list=sales.filter(function(s){
+      if(filter==='today')return s.invoice_date===today;
+      if(filter==='week')return s.invoice_date>=weekStart&&s.invoice_date<=today;
+      if(filter==='month')return (s.invoice_date||'').slice(0,7)===month;
+      if(filter==='year')return (s.invoice_date||'').slice(0,4)===year;
+      if(filter==='range')return (!rs||s.invoice_date>=rs)&&(!re||s.invoice_date<=re);
+      if(filter==='cash')return s.itype==='cash';
+      if(filter==='credit')return s.itype==='credit';
+      return true;
+    }).filter(function(s){
+      var custSel=$('fCustomer').value;
+      return !custSel||(s.customer_name||'').trim()===custSel;
+    });
+
+    var typeLabel={cash:'Cash',credit:'Credit',quote:'Quote'};
+    $('tbody').innerHTML=list.map(function(s){
+      return '<tr><td>'+(s.invoice_date||'')+(s.entry_time?'<br><span style="font-size:10px;color:#888">'+s.entry_time+'</span>':'')+'</td><td>'+(s.invoice_no||'')+'</td><td>'+(s.customer_name||'')+'</td>'+
+        '<td><span class="type-pill type-'+(s.itype||'cash')+'">'+(typeLabel[s.itype]||'Cash')+'</span></td>'+
+        '<td class="num">'+fmt(s.vat_amount)+'</td><td class="num">'+fmt(s.grand_total)+'</td></tr>';
+    }).join('');
+    $('empty').style.display=list.length?'none':'block';
+  }
+
+  function setFilter(f,btn){
+    filter=f;
+    Array.prototype.forEach.call(document.querySelectorAll('.filters button'),function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    render();
+  }
+  $('fCustomer').addEventListener('change',render);
+  $('fAll').onclick=function(){setFilter('all',this);};
+  $('fToday').onclick=function(){setFilter('today',this);};
+  $('fWeek').onclick=function(){setFilter('week',this);};
+  $('fMonth').onclick=function(){setFilter('month',this);};
+  $('fYear').onclick=function(){setFilter('year',this);};
+  $('fCash').onclick=function(){setFilter('cash',this);};
+  $('fCredit').onclick=function(){setFilter('credit',this);};
+  $('homeLink').onclick=function(e){e.preventDefault();if(window.parent!==window){window.parent.postMessage('home','*');}else{location.href='index.html';}};
+
+  function getRangeRows(){
+    var rs=$('rangeStart').value, re=$('rangeEnd').value;
+    if(!rs&&!re){alert('Pick a From and To date first.');return null;}
+    return sales.filter(function(s){return s.itype!=='quote'&&(!rs||s.invoice_date>=rs)&&(!re||s.invoice_date<=re);});
+  }
+  $('btnFilterRange').onclick=function(){
+    var rs=$('rangeStart').value, re=$('rangeEnd').value;
+    if(!rs&&!re){alert('Pick a From and To date first.');return;}
+    filter='range';
+    Array.prototype.forEach.call(document.querySelectorAll('.filters button'),function(b){b.classList.remove('active');});
+    render();
+  };
+
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=function(){rej(src);};document.head.appendChild(s);});}
+  var libsReady=false;
+  function ensureLibs(){
+    if(libsReady)return Promise.resolve();
+    setStatus('Loading PDF engine… (needs internet the first time)','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+      .then(function(){return loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');})
+      .then(function(){libsReady=true;setStatus('','');});
+  }
+
+  function buildReportSheet(title, subtitle, rows, showVatFocus){
+    var typeLabel={cash:'Cash',credit:'Credit',quote:'Quote'};
+    var totalVat=rows.reduce(function(a,s){return a+Number(s.vat_amount||0);},0);
+    var totalGrand=rows.reduce(function(a,s){return a+Number(s.grand_total||0);},0);
+    var totalSub=rows.reduce(function(a,s){return a+Number(s.subtotal||0);},0);
+    var body=rows.map(function(s){
+      return '<tr><td>'+(s.invoice_date||'')+(s.entry_time?' '+s.entry_time:'')+'</td><td>'+(s.invoice_no||'')+'</td><td>'+(s.customer_name||'')+'</td>'+
+        '<td>'+(typeLabel[s.itype]||'Cash')+'</td>'+
+        '<td style="text-align:right">'+fmt(s.subtotal)+'</td>'+
+        '<td style="text-align:right">'+fmt(s.vat_amount)+'</td>'+
+        '<td style="text-align:right">'+fmt(s.grand_total)+'</td></tr>';
+    }).join('');
+    return '<div class="rsheet">'+
+      COMPANY_HEADER_HTML+
+      '<div class="rsub">'+title+' — '+subtitle+' · Generated '+new Date().toLocaleString()+'</div>'+
+      '<table><thead><tr><th>Date</th><th>Invoice #</th><th>Customer</th><th>Type</th><th>Subtotal</th><th>VAT</th><th>Total</th></tr></thead>'+
+      '<tbody>'+(body||'<tr><td colspan="7" style="text-align:center;color:#888">No invoices in this period.</td></tr>')+'</tbody>'+
+      '<tfoot><tr><td colspan="4">TOTAL ('+rows.length+' invoice'+(rows.length===1?'':'s')+')</td>'+
+      '<td style="text-align:right">'+fmt(totalSub)+'</td>'+
+      '<td style="text-align:right">'+fmt(totalVat)+'</td>'+
+      '<td style="text-align:right">'+fmt(totalGrand)+'</td></tr></tfoot>'+
+      '</table>'+
+      (showVatFocus?'<div style="margin-top:16px;padding:12px;background:#FBF7EC;border:2px solid #C8941F;border-radius:8px;font-size:15px;font-weight:800;color:#9E7415">Total VAT for this period: '+fmt(totalVat)+' SAR</div>':'')+
+      '</div>';
+  }
+
+  function openPdfForPrint(pdf, filename){
+    try{pdf.autoPrint();}catch(e){}
+    try{
+      var url=pdf.output('bloburl');
+      var w=window.open(url,'_blank');
+      if(!w){pdf.save(filename);setStatus('PDF created. Open it from Downloads and print.','warn');}
+      else{setStatus('PDF opened for printing.','ok');}
+    }catch(e){pdf.save(filename);setStatus('PDF created. Open it from Downloads and print.','warn');}
+  }
+  function generateReportPDF(rows, title, subtitle, filename, showVatFocus, printNow){
+    ensureLibs().then(function(){
+      var host=$('sheetHost');
+      host.innerHTML=buildReportSheet(title, subtitle, rows, showVatFocus);
+      return new Promise(function(r){setTimeout(r,250);}).then(function(){
+        return html2canvas(host.firstChild,{scale:2,backgroundColor:'#ffffff'}).then(function(canvas){
+          var img=canvas.toDataURL('image/jpeg',0.92);
+          var jsPDF=window.jspdf.jsPDF;
+          var pdf=new jsPDF({unit:'pt',format:'a4'});
+          var pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();
+          var iw=pw,ih=canvas.height*(pw/canvas.width);
+          if(ih<=ph){pdf.addImage(img,'JPEG',0,0,iw,ih);}else{var pos=0;while(pos<ih){pdf.addImage(img,'JPEG',0,-pos,iw,ih);pos+=ph;if(pos<ih)pdf.addPage();}}
+          var printHtml=host.firstChild?host.firstChild.outerHTML:buildReportSheet(title, subtitle, rows, showVatFocus);
+          host.innerHTML='';
+          if(printNow){nagExactPdfPrintV150(printHtml,filename);}else{pdf.save(filename);setStatus('PDF created — check your Downloads.','ok');}
+        });
+      });
+    }).catch(function(){setStatus('Could not load PDF engine. Connect to internet once, then try again.','err');});
+  }
+
+
+  function nagExactPdfPrintV150(html, jobName){
+    function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+    function cleanTitle(v){return String(v||'Print').replace(/[<>]/g,'');}
+    function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+    function bodyOf(h){h=stripScripts(h); var m=h.match(/<body[^>]*>([\s\S]*?)<\/body>/i); return m?m[1]:h;}
+    function stylesOf(h){var out=''; try{var ms=String(h||'').match(/<style\b[^>]*>[\s\S]*?<\/style>/gi); if(ms)out+=ms.join('\n');}catch(e){} try{out+=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){} return out;}
+    function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+    function splitCanvas(canvas){
+      var ratio=841.89/595.28;
+      var pageH=Math.floor(canvas.width*ratio);
+      var pages=[];
+      for(var y=0;y<canvas.height;y+=pageH){
+        var h=Math.min(pageH,canvas.height-y);
+        var c=document.createElement('canvas');
+        c.width=canvas.width;c.height=h;
+        var ctx=c.getContext('2d');
+        ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+        pages.push({src:c.toDataURL('image/jpeg',0.96),h:h});
+      }
+      return pages;
+    }
+    function printImages(pages){
+      var old=document.getElementById('nagExactPdfPrintFrameV150'); if(old)old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagExactPdfPrintFrameV150';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var imgs=pages.map(function(p,i){return '<div class="nag-page"><img src="'+p.src+'"></div>';}).join('');
+      var d=ifr.contentWindow.document;
+      d.open();
+      d.write('<!doctype html><html><head><meta charset="utf-8"><title>'+cleanTitle(jobName)+'</title><style>@page{size:A4;margin:0}html,body{margin:0!important;padding:0!important;background:#fff!important}.nag-page{width:210mm;min-height:297mm;page-break-after:always;break-after:page;background:#fff;overflow:hidden}.nag-page:last-child{page-break-after:auto;break-after:auto}.nag-page img{display:block;width:210mm;height:auto;margin:0;padding:0}</style></head><body>'+imgs+'</body></html>');
+      d.close();
+      var done=false;
+      function go(){if(done)return;done=true;try{ifr.contentWindow.focus();ifr.contentWindow.print();setMsg('Windows print dialog opened with exact PDF layout.','ok');}catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}setTimeout(function(){try{ifr.remove()}catch(_e){}},12000);}
+      ifr.onload=function(){setTimeout(go,500)}; setTimeout(go,1200);
+    }
+    function render(){
+      var old=document.getElementById('nagExactPdfRenderHostV150'); if(old)old.remove();
+      var host=document.createElement('div');
+      host.id='nagExactPdfRenderHostV150';
+      host.style.cssText='position:fixed;left:-20000px;top:0;width:800px;background:#fff;opacity:0.01;pointer-events:none;z-index:-1;overflow:visible';
+      host.innerHTML=stylesOf(html)+bodyOf(html);
+      document.body.appendChild(host);
+      var target=host.querySelector('.rsheet,.receipt,.invoice,.statement,#sheet')||host.firstElementChild||host;
+      return wait(450).then(function(){
+        return html2canvas(target,{scale:2,backgroundColor:'#ffffff',useCORS:true,allowTaint:true,scrollX:0,scrollY:0,windowWidth:Math.max(target.scrollWidth,800),windowHeight:Math.max(target.scrollHeight,1100)});
+      }).then(function(canvas){
+        try{host.remove();}catch(e){}
+        printImages(splitCanvas(canvas));
+      }).catch(function(e){try{host.remove();}catch(_e){} setMsg('Print failed: '+(e&&e.message?e.message:e),'err');});
+    }
+    try{
+      if(typeof ensureLibs==='function'){
+        ensureLibs().then(render).catch(function(){setMsg('Could not load PDF/print engine. Connect to internet once, then retry.','err');});
+      }else if(typeof html2canvas==='undefined'){
+        var sc=document.createElement('script');
+        sc.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        sc.onload=render; sc.onerror=function(){setMsg('Could not load print engine.','err');}; document.head.appendChild(sc);
+      }else{render();}
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+  }
+  function printSalesReportExact(rows,title,subtitle,filename,showVatFocus){
+    var css=document.querySelector('style').innerHTML;
+    var html='<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+buildReportSheet(title,subtitle,rows,showVatFocus)+'</body></html>';
+    nagExactPdfPrintV150(html,filename);
+  }
+
+  function printMonthReport(){
+    var month=monthStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&(s.invoice_date||'').slice(0,7)===month;});
+    generateReportPDF(rows,'Monthly Sales Report',month,'Monthly-Sales-Report-'+month+'.pdf',false,true);
+  }
+
+
+  $('btnPdfToday').onclick=function(){
+    var today=todayStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&s.invoice_date===today;});
+    generateReportPDF(rows,'Daily Sales Report',today,'Daily-Sales-Report-'+today+'.pdf',false);
+  };
+  $('btnPdfWeek').onclick=function(){
+    var today=todayStr(), weekStart=weekAgoStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&s.invoice_date>=weekStart&&s.invoice_date<=today;});
+    generateReportPDF(rows,'Weekly Sales Report',weekStart+' to '+today,'Weekly-Sales-Report-'+today+'.pdf',false);
+  };
+  $('btnPdfMonth').onclick=function(){
+    var month=monthStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&(s.invoice_date||'').slice(0,7)===month;});
+    generateReportPDF(rows,'Monthly Sales Report',month,'Monthly-Sales-Report-'+month+'.pdf',false);
+  };
+  $('btnPdfVat').onclick=function(){
+    var month=monthStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&(s.invoice_date||'').slice(0,7)===month;});
+    generateReportPDF(rows,'Monthly VAT Report',month,'Monthly-VAT-Report-'+month+'.pdf',true);
+  };
+  $('btnPrintMonth').onclick=printMonthReport;
+  if($('btnPrintToday'))$('btnPrintToday').onclick=function(){
+    var today=todayStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&s.invoice_date===today;});
+    printSalesReportExact(rows,'Daily Sales Report',today,'Daily-Sales-Report-'+today+'.pdf',false);
+  };
+  if($('btnPrintWeek'))$('btnPrintWeek').onclick=function(){
+    var today=todayStr(), weekStart=weekAgoStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&s.invoice_date>=weekStart&&s.invoice_date<=today;});
+    printSalesReportExact(rows,'Weekly Sales Report',weekStart+' to '+today,'Weekly-Sales-Report-'+today+'.pdf',false);
+  };
+  if($('btnPrintVat'))$('btnPrintVat').onclick=function(){
+    var month=monthStr();
+    var rows=sales.filter(function(s){return s.itype!=='quote'&&(s.invoice_date||'').slice(0,7)===month;});
+    printSalesReportExact(rows,'Monthly VAT Report',month,'Monthly-VAT-Report-'+month+'.pdf',true);
+  };
+  if($('btnPrintRange'))$('btnPrintRange').onclick=function(){
+    var rows=getRangeRows(); if(!rows)return;
+    var rs=$('rangeStart').value||'start', re=$('rangeEnd').value||'today';
+    printSalesReportExact(rows,'Sales Report - Custom Range',rs+' to '+re,'Sales-Report-'+rs+'_to_'+re+'.pdf',false);
+  };
+
+  $('btnPdfRange').onclick=function(){
+    var rows=getRangeRows();
+    if(!rows)return;
+    var rs=$('rangeStart').value||'start', re=$('rangeEnd').value||'today';
+    generateReportPDF(rows,'Sales Report — Custom Range',rs+' to '+re,'Sales-Report-'+rs+'_to_'+re+'.pdf',false);
+  };
+
+  var xlsxReady=false;
+  function ensureXlsx(){
+    if(xlsxReady)return Promise.resolve();
+    if(typeof XLSX!=='undefined'){xlsxReady=true;return Promise.resolve();}
+    setStatus('Loading Excel engine…','warn');
+    return loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js').then(function(){xlsxReady=true;setStatus('','');});
+  }
+  $('btnExcelRange').onclick=function(){
+    var rows=getRangeRows();
+    if(!rows)return;
+    ensureXlsx().then(function(){
+      var typeLabel={cash:'Cash',credit:'Credit',quote:'Quote'};
+      var data=rows.map(function(s){
+        return {
+          'Date':s.invoice_date||'',
+          'Invoice #':s.invoice_no||'',
+          'Customer':s.customer_name||'',
+          'Type':typeLabel[s.itype]||'Cash',
+          'Subtotal':Number(s.subtotal)||0,
+          'VAT':Number(s.vat_amount)||0,
+          'Total':Number(s.grand_total)||0
+        };
+      });
+      var ws=XLSX.utils.json_to_sheet(data);
+      var wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,'Sales Report');
+      var rs=$('rangeStart').value||'start', re=$('rangeEnd').value||'today';
+      XLSX.writeFile(wb,'Sales-Report-'+rs+'_to_'+re+'.xlsx');
+      setStatus('Excel file downloaded.','ok');
+    }).catch(function(){setStatus('Could not load Excel engine. Check internet connection.','err');});
+  };
+
+  window.addEventListener('load',initCloud);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+
+<script id="nag-desktop-clean-html-print-v148">
+(function(){
+  if(window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__) return;
+  window.__NAG_DESKTOP_CLEAN_HTML_PRINT_V148__ = true;
+  function setMsg(msg, cls){try{ if(typeof setStatus==='function'){setStatus(msg||'',cls||'ok');return;} }catch(e){} try{var el=document.getElementById('status'); if(el){el.textContent=msg||'';el.className=cls||'ok';el.style.display=msg?'block':'none';}}catch(e){}}
+  function stripScripts(h){return String(h||'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');}
+  function fullDoc(h, jobName){
+    h=stripScripts(h);
+    if(/<html[\s>]/i.test(h)){
+      h=h.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+      return h;
+    }
+    var css='';
+    try{css=Array.prototype.map.call(document.querySelectorAll('style,link[rel="stylesheet"]'),function(n){return n.outerHTML;}).join('\n');}catch(e){}
+    return '<!doctype html><html><head><meta charset="utf-8"><title>'+String(jobName||'Print').replace(/[<>]/g,'')+'</title>'+css+'<style>@page{size:auto;margin:8mm}html,body{background:#fff!important;margin:0!important;padding:0!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}</style></head><body>'+h+'</body></html>';
+  }
+  function printHtmlClean(html, jobName){
+    try{
+      var old=document.getElementById('nagDesktopPrintFrameV148'); if(old) old.remove();
+      var ifr=document.createElement('iframe');
+      ifr.id='nagDesktopPrintFrameV148';
+      ifr.title=jobName||'Print';
+      ifr.style.cssText='position:fixed;left:-20000px;top:0;width:1200px;height:1800px;border:0;background:#fff;opacity:0.01;pointer-events:none;z-index:-1';
+      document.body.appendChild(ifr);
+      var d=ifr.contentWindow.document; d.open(); d.write(fullDoc(html, jobName)); d.close();
+      var done=false;
+      function go(){
+        if(done)return; done=true;
+        try{ifr.contentWindow.focus(); ifr.contentWindow.print(); setMsg('Windows print dialog opened with clean PDF layout.','ok');}
+        catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err');}
+        setTimeout(function(){try{ifr.remove()}catch(_e){}},8000);
+      }
+      ifr.onload=function(){setTimeout(go,350)};
+      setTimeout(go,900);
+      return true;
+    }catch(e){setMsg('Print failed: '+(e&&e.message?e.message:e),'err'); return false;}
+  }
+  window.nagDesktopPrintHtmlClean = printHtmlClean;
+  window.nagDesktopCleanPrint = printHtmlClean;
+  window.printSheet = function(html, jobName){return printHtmlClean(html, jobName||document.title||'Document');};
+  try{ printSheet = window.printSheet; }catch(e){}
+  window.openPdfForPrint = function(pdf, filename){setMsg('Old PDF print flow is disabled. This module should use clean HTML print layout.','warn'); return false;};
+  window.openPdfForPrintUnified = window.openPdfForPrint;
+  window.nagOpenPdfWindowAndPrint = window.openPdfForPrint;
+  try{ openPdfForPrint = window.openPdfForPrint; }catch(e){}
+  try{ openPdfForPrintUnified = window.openPdfForPrintUnified; }catch(e){}
+})();
+</script>
+
+</body>
+</html>
