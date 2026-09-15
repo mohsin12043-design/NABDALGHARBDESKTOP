@@ -1,0 +1,45 @@
+NABD AL-GHARB DESKTOP v2.0.3 TEST RESULTS
+
+PASS package version
+PASS tauri version
+PASS cargo version
+PASS assigned inventory embedded
+PASS dedicated builder
+PASS inventory route uses dedicated module
+PASS vehicle full module admin only
+PASS mini full module admin only
+PASS vehicle removed from cashier permissions
+PASS mini removed from cashier permissions
+PASS cashier css hides Khurooj
+PASS cashier css hides full vehicle
+PASS cashier css hides full mini
+PASS strong hidden class
+PASS old perms sanitized
+PASS assignment normalization
+PASS mini title
+PASS vehicle title
+PASS positive stock filter
+PASS read only no save buttons
+PASS cashier scope wins vehicle
+PASS cashier scope wins mini
+PASS vehicle mode forced inventory
+PASS mini mode forced inventory
+PASS warehouse permission retained
+PASS VEHICLE_STOCK embedded found
+PASS VEHICLE_STOCK embedded matches
+PASS MINI_STORE embedded found
+PASS MINI_STORE embedded matches
+PASS ASSIGNED_INVENTORY embedded found
+PASS ASSIGNED_INVENTORY embedded matches
+PASS Vehicle JavaScript syntax
+PASS Mini JavaScript syntax
+PASS Assigned JavaScript syntax
+PASS Shell JavaScript syntax
+
+RESULT: 35 passed, 0 failed
+
+SUPABASE
+No new SQL is required.
+
+WINDOWS INSTALLER
+Not built in this environment.
