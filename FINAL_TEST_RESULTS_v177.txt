@@ -1,8 +1,0 @@
-Nabd Al-Gharb Desktop v1.7.7 validation
-
-PASS: EMPLOYEES.html contains driving_license_no and driving_license_expiry fields.
-PASS: Employee add, edit, search, table display, PDF and print mappings updated.
-PASS: Supabase migration adds department and driving license columns without changing employee ID type.
-PASS: PostgREST schema cache reload included.
-PASS: package.json, tauri.conf.json and Cargo.toml version set to 1.7.7.
-PASS: Existing Khurooj, Inventory, Vehicle Stock, Mini Store and updater configuration preserved.
