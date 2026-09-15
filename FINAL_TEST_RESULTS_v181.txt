@@ -1,0 +1,29 @@
+NABD AL-GHARB DESKTOP v1.8.1 TEST RESULTS
+
+PASS  Version consistency across package.json, Cargo.toml and tauri.conf.json
+PASS  Required application files including src-tauri/src/main.rs are present
+PASS  Auto updater production endpoint and public key remain configured
+PASS  Vehicle Stock, Mini Store and Stock Control modules remain embedded
+PASS  Inline JavaScript syntax checks passed
+PASS  Vehicle settlement auto quantity remains included
+PASS  One Click Vehicle Bill uses the company Tax Invoice layout
+PASS  Cash Invoice option is included
+PASS  Credit Invoice option is included
+PASS  Quotation is not included in Vehicle Bill
+PASS  Paid and Pending payment status is included
+PASS  Customer name, VAT, mobile, address and national address fields are included
+PASS  Vehicle and cashier details appear on the invoice
+PASS  Product, quantity, unit price, subtotal, VAT and grand total appear on the invoice
+PASS  Amount in words is included
+PASS  ZATCA QR generation with offline-safe fallback is included
+PASS  Vehicle bill history persistence remains included
+PASS  Existing Tax Invoice vehicle source selection remains included
+PASS  Existing Tax Invoice vehicle stock validation remains included
+PASS  Existing vehicle sale stock deduction remains included
+PASS  Existing vehicle sales history remains included
+
+SOURCE VALIDATION
+24 passed, 0 warnings, 0 failures
+
+WINDOWS INSTALLER
+Not compiled in this environment. Use GitHub Actions to create the signed Windows installer.

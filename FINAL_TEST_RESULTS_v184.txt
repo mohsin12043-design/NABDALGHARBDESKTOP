@@ -1,0 +1,31 @@
+NABD AL-GHARB DESKTOP v1.8.4 TEST RESULTS
+
+PASS  package.json version is 1.8.4
+PASS  Cargo.toml version is 1.8.4
+PASS  tauri.conf.json version is 1.8.4
+PASS  Tauri main.rs exists and is non-empty
+PASS  Correction editor card is present
+PASS  Correction can change product, type and quantity
+PASS  Admin correction action is present
+PASS  Admin cancellation action is present
+PASS  Cashier correction request action is present
+PASS  Admin request review and rejection actions are present
+PASS  VCR, VCN and VCRQ prefixes are configured
+PASS  Original records are marked corrected not deleted
+PASS  Cancelled quantity restores Vehicle Stock
+PASS  80 to 8 net restoration logic exists
+PASS  Product correction restores original product
+PASS  Correction request does not change inventory
+PASS  Corrected and cancelled original records are excluded from report totals
+PASS  Correction totals use corrected type and quantity
+PASS  Audit document supports correction, cancellation and requests
+PASS  Company details remain in audit document
+PASS  No new SQL file is required
+PASS  Vehicle Stock JavaScript syntax check
+PASS  Embedded Vehicle Stock module matches decoded v1.8.4 source
+PASS  Static correction simulation 80 to 8 restores 72
+PASS  Static cancellation simulation restores original quantity
+
+TOTAL: 25 passed, 0 failed.
+
+Windows installer was not compiled in this environment. Use GitHub Actions to generate the signed Windows installer.
