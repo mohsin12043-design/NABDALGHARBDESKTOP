@@ -1,9 +1,0 @@
-Customer Ledger PDF and Print header balance fix
-
-English and Arabic company detail columns now have equal width.
-English and Arabic text now use the same font size and line spacing.
-English and Arabic company names now use matching typography.
-The logo remains in a fixed center column.
-Long addresses wrap inside their own equal columns.
-Customer Ledger saved company address, mobile number, and mobile Show or Hide behavior remain active.
-All other 22 embedded modules are unchanged from desktop v216.
