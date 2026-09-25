@@ -1,0 +1,22 @@
+NABD AL-GHARB DESKTOP v1.7.6 TEST RESULTS
+
+PASS - package.json version is 1.7.6
+PASS - Cargo.toml version is 1.7.6
+PASS - tauri.conf.json version is 1.7.6
+PASS - Required application files are present
+PASS - Main embedded JavaScript syntax checks passed
+PASS - Inventory embedded module decodes successfully
+PASS - Vehicle Stock embedded module decodes successfully
+PASS - Inventory Vehicle Price column is present
+PASS - Inventory Vehicle Price Add and Edit field is present
+PASS - Vehicle Price is saved to nag_vehicle_prices_v1
+PASS - Vehicle Stock reads nag_vehicle_prices_v1
+PASS - Vehicle Stock auto-fills Vehicle Price on product selection
+PASS - Wholesale Price fallback is present
+PASS - Inventory Excel import and export include Vehicle Price
+PASS - Inventory PDF and print report include Vehicle Price
+PASS - Existing cloud sync key includes nag_vehicle_prices_v1
+PASS - Existing Vehicle Stock, Mini Store, Khurooj, negative stock and testing mode modules remain embedded
+
+WINDOWS INSTALLER
+Not built in this environment. Use GitHub Actions to generate the signed Windows installer.
