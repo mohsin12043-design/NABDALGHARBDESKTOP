@@ -1,0 +1,6 @@
+Desktop v2.2.3 Customer Ledger status label
+
+- Removes the stale offline label from Customer Ledger.
+- Directs users to the Home screen for the app's actual cloud sync status.
+- Preserves the Customer Ledger render fix and cross-device merge behavior from v2.2.2.
+- Desktop and mobile source were checked to use the same Supabase project and publishable key, and both use the app_data table.

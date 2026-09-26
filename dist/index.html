@@ -312,7 +312,7 @@
     var source=String(doc||''),bodyEnd=source.toLowerCase().lastIndexOf('</body>');
     return bodyEnd>=0?source.slice(0,bodyEnd)+patch+'</body>'+source.slice(bodyEnd+7):patch+source;
   }
-  function openTool(doc,label){nagLogActivity(label||'Module','Opened module','','',label||'');nagShowUserBar(false);document.getElementById('home').style.display='none';document.getElementById('screen').style.display='block';doc=nagApplyCompanySettingsToDoc(doc);doc=nagApplyLedgerRecoveryV256(doc,label);document.getElementById('frame').srcdoc=injectCashierScope(doc);}
+  function openTool(doc,label){nagLogActivity(label||'Module','Opened module','','',label||'');nagShowUserBar(false);document.getElementById('home').style.display='none';document.getElementById('screen').style.display='block';doc=nagApplyCompanySettingsToDoc(doc);if(label==='Customer Ledger')doc=String(doc||'').replace('Nabd Al-Gharb Trading Est. · offline · saved on this device','Nabd Al-Gharb Trading Est. · check cloud sync status on Home');doc=nagApplyLedgerRecoveryV256(doc,label);document.getElementById('frame').srcdoc=injectCashierScope(doc);}
   document.getElementById('pickDashboard').onclick=function(){var s=window.nagSession||null;if(s&&s.role!=='admin')return;openTool(DASHBOARD,'Dashboard');};
   document.getElementById('pickReceipt').onclick=function(){openTool(RECV,'Cash Receipt');};
   document.getElementById('pickInvoice').onclick=function(){openTool(INV,'Tax Invoice');};
