@@ -2,7 +2,7 @@ name: Build Desktop App
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, fix/desktop-cross-device-sync-v2.2.1 ]
   workflow_dispatch:
 
 jobs:
@@ -11,6 +11,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sort Tax Invoice history newest first
+        run: pwsh -File .github/scripts/fix-tax-invoice-history-sort.ps1
 
       - name: Setup Node
         uses: actions/setup-node@v4
