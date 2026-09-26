@@ -1,0 +1,6 @@
+Desktop v2.2.2 Customer Ledger render fix
+
+- Ledger recovery script now inserts before the final HTML body close, rather than a body tag inside print-layout JavaScript text.
+- This prevents the print/PDF helper source from leaking into the Customer Ledger screen and preserves its script execution.
+- Cross-device cloud merge from v2.2.1 remains included. It merges invoice, receipt, and ledger records without replacing cloud-only data.
+- No database reset or SQL migration is included.
