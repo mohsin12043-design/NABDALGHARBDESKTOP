@@ -417,7 +417,7 @@
   function nagCloudNormLedger(v){v=v&&typeof v==='object'?v:{};if(!Array.isArray(v.customers))v.customers=[];if(!v.entries||typeof v.entries!=='object'||Array.isArray(v.entries))v.entries={};if(!v.settings||typeof v.settings!=='object'||Array.isArray(v.settings))v.settings={};return v;}
   function nagCloudCustomerMatch(list,c){var id=nagCloudText(c&&c.id),name=nagCloudText(c&&c.name).toLowerCase().replace(/\s+/g,' '),mobile=nagCloudText(c&&c.mobile);return (list||[]).find(function(x){var xn=nagCloudText(x&&x.name).toLowerCase().replace(/\s+/g,' '),xm=nagCloudText(x&&x.mobile);return (id&&String(x.id||'')===id)||(name&&xn===name&&(!mobile||!xm||mobile===xm));})||null;}
   function nagCloudEntryId(e,index){e=e||{};var inv=nagCloudText(e.invoiceNo||e.invoice_no),rec=nagCloudText(e.receiptNo||e.receipt_no);if(inv)return 'invoice|'+inv;if(rec)return 'receipt|'+rec;return 'row|'+[e.id||'',e.date||'',e.time||'',e.desc||e.description||'',e.bill||e.debit||0,e.recv||e.received||e.credit||0,index||0].join('|');}
-  function nagCloudMergeLedger(local,cloud){var out=nagCloudNormLedger({customers:[],entries:{},settings:{}}),sources=[local,cloud];sources.forEach(function(raw){var src=nagCloudNormLedger(raw),idMap={};src.customers.forEach(function(rawC){var c=nagCloudMergeRecord({},rawC),found=nagCloudCustomerMatch(out.customers,c);if(!found){if(!c.id)c.id='cloud_c_'+Math.random().toString(36).slice(2);out.customers.push(c);found=c;}else{var mergedCustomer=nagCloudMergeRecord(found,c),customerIndex=out.customers.indexOf(found);if(customerIndex>=0)out.customers[customerIndex]=mergedCustomer;found=mergedCustomer;}if(rawC&&rawC.id)idMap[String(rawC.id)]=String(found.id);});Object.keys(src.entries).forEach(function(cid){var targetId=idMap[String(cid)]||String(cid),target=out.entries[targetId]||(out.entries[targetId]=[]),seen={};target.forEach(function(e,i){seen[nagCloudEntryId(e,i)]=i;});(Array.isArray(src.entries[cid])?src.entries[cid]:[]).forEach(function(e,i){var id=nagCloudEntryId(e,i);if(seen[id]===undefined){seen[id]=target.length;target.push(e);}else target[seen[id]]=nagCloudMergeRecord(target[seen[id]],e);});});out.settings=Object.assign({},out.settings||{},src.settings||{});});out.customers.forEach(function(c){if(!out.entries[c.id])out.entries[c.id]=[];});return out;}
+  function nagCloudMergeLedger(local,cloud){var out=nagCloudNormLedger({customers:[],entries:{},settings:{}}),sources=[local,cloud];sources.forEach(function(raw){var src=nagCloudNormLedger(raw),idMap={};src.customers.forEach(function(rawC){var c=nagCloudMergeRecord({},rawC),found=nagCloudCustomerMatch(out.customers,c);if(!found){if(!c.id)c.id='cloud_c_'+Math.random().toString(36).slice(2);out.customers.push(c);found=c;}else{var stableId=String(found.id),mergedCustomer=nagCloudMergeRecord(found,c),customerIndex=out.customers.indexOf(found);mergedCustomer.id=stableId;if(customerIndex>=0)out.customers[customerIndex]=mergedCustomer;found=mergedCustomer;}if(rawC&&rawC.id)idMap[String(rawC.id)]=String(found.id);});Object.keys(src.entries).forEach(function(cid){var targetId=idMap[String(cid)]||String(cid),target=out.entries[targetId]||(out.entries[targetId]=[]),seen={};target.forEach(function(e,i){seen[nagCloudEntryId(e,i)]=i;});(Array.isArray(src.entries[cid])?src.entries[cid]:[]).forEach(function(e,i){var id=nagCloudEntryId(e,i);if(seen[id]===undefined){seen[id]=target.length;target.push(e);}else target[seen[id]]=nagCloudMergeRecord(target[seen[id]],e);});});out.settings=Object.assign({},out.settings||{},src.settings||{});});out.customers.forEach(function(c){if(!out.entries[c.id])out.entries[c.id]=[];});return out;}
   function nagMergeCloudValue(key,localValue,cloudValue){if(!nagCloudMergeKey(key))return cloudValue;if(key==='nag_ledger_v1')return JSON.stringify(nagCloudMergeLedger(nagCloudParse(localValue,{}),nagCloudParse(cloudValue,{})));return JSON.stringify(nagCloudMergeArray(key,nagCloudParse(localValue,[]),nagCloudParse(cloudValue,[])));}
   function pullFromCloud(){
     if(!cloudReady)return;
@@ -426,7 +426,9 @@
       if(res.error){setCloudStatus('☁ Offline mode — local data in use','err');return;}
       var rows=res.data||[];
       if(rows.length===0){
-        setCloudStatus('☁ Cloud is empty — use "Upload My Data to Cloud" once from your main device','busy');
+        var seeded=0;
+        ALL_KEYS.forEach(function(k){var v=localStorage.getItem(k);if(v!==null){seeded++;pushKeyToCloud(k,v);}});
+        setCloudStatus(seeded?'☁ Cloud is empty. Safely syncing this device’s saved data…':'☁ Cloud and this device have no saved data','busy');
         return;
       }
       rows.forEach(function(r){var k=String(r.key);try{cloudApplying=true;if(r.value==null){localStorage.removeItem(k);}else{localStorage.setItem(k,nagMergeCloudValue(k,localStorage.getItem(k),r.value));}}catch(e){}finally{cloudApplying=false;}if(r.value!=null&&nagCloudMergeKey(k)&&String(localStorage.getItem(k)||'')!==String(r.value||''))setTimeout(function(){pushKeyToCloud(k,localStorage.getItem(k));},0);});
@@ -467,14 +469,23 @@
   installParentCloudStorageSync();
   function uploadAllLocalToCloud(){
     if(!cloudReady){setDataStatus2('No internet connection right now.','err');return;}
-    var rows=[];
-    ALL_KEYS.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)rows.push({key:k,value:v,updated_at:new Date().toISOString()});});
-    if(rows.length===0){setDataStatus2('No local data found on this device to upload.','err');return;}
-    if(!confirm('Upload this device\'s data to the cloud? This will overwrite cloud data for '+rows.length+' item(s), and all your other devices will then receive this data.'))return;
-    sb.from('app_data').upsert(rows).then(function(res){
-      if(res.error){setDataStatus2('Upload failed. Check internet connection.','err');}
-      else{setDataStatus2('Uploaded to cloud successfully. Other devices will now sync this data.','ok');}
-    }).catch(function(){setDataStatus2('Upload failed. Check internet connection.','err');});
+    var localRows=[];
+    ALL_KEYS.forEach(function(k){var v=localStorage.getItem(k);if(v!==null)localRows.push({key:k,value:v});});
+    if(localRows.length===0){setDataStatus2('No local data found on this device to upload.','err');return;}
+    if(!confirm('Safely merge this device with cloud data? Tax invoices, cash receipts, customer ledger and cashier activity will be combined without duplicates. Cloud-only records will be kept.'))return;
+    setDataStatus2('Safely merging local and cloud records. Please keep the app open…','busy');
+    nagFetchAllRows('app_data').then(function(cloudRows){
+      var cloudByKey=Object.create(null);
+      (cloudRows||[]).forEach(function(r){cloudByKey[String(r.key||'')]=r.value;});
+      var now=new Date().toISOString();
+      var rows=localRows.map(function(r){
+        var k=String(r.key),cloudValue=cloudByKey[k],value=nagCloudMergeKey(k)?nagMergeCloudValue(k,r.value,cloudValue):r.value;
+        if(nagCloudMergeKey(k)){try{cloudApplying=true;localStorage.setItem(k,value);}catch(e){}finally{cloudApplying=false;}}
+        return {key:k,value:value,updated_at:now};
+      });
+      return sb.from('app_data').upsert(rows).then(function(res){if(res.error)throw new Error(res.error.message||'Cloud merge failed');return rows.length;});
+    }).then(function(count){setDataStatus2('Safe cloud merge completed. '+count+' local data item(s) synced; existing invoice, receipt, ledger and cloud-only records were kept.','ok');})
+      .catch(function(err){setDataStatus2('Cloud merge failed: '+(err&&err.message?err.message:'Check internet connection. Local data was not reset. No cloud overwrite was completed.'),'err');});
   }
   window.addEventListener('message',function(e){
     if(e.data&&e.data.type==='nag-save-company-address'){var d=e.data;try{localStorage.setItem(NAG_COMPANY_ADDRESS_EN_KEY,String(d.en||''));localStorage.setItem(NAG_COMPANY_ADDRESS_AR_KEY,String(d.ar||''));pushKeyToCloud(NAG_COMPANY_ADDRESS_EN_KEY,String(d.en||''));pushKeyToCloud(NAG_COMPANY_ADDRESS_AR_KEY,String(d.ar||''));}catch(_e){}return;}

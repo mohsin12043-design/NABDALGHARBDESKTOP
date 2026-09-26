@@ -1,0 +1,9 @@
+Desktop v2.2.1 cross-device sync update
+
+- Cloud pull merges invoice history, receipt history and customer ledger records instead of replacing local transaction history.
+- Regular writes and realtime updates merge those records across devices.
+- Starting with an empty cloud safely seeds it from this device's saved app data.
+- Manual cloud upload now merges transaction histories and keeps cloud-only records instead of replacing cloud history with the current device snapshot.
+- Customer Ledger keeps its existing history recovery from saved invoice and receipt history.
+- No SQL or database reset is part of this update.
+- Dashboard and invoice/receipt layouts are unchanged.
