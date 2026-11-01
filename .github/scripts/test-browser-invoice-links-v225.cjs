@@ -1,0 +1,49 @@
+// Isolated browser verification using synthetic records only. No production services.
+const fs=require('fs'),path=require('path'),os=require('os'),http=require('http'),cp=require('child_process'),vm=require('vm'),assert=require('assert/strict');
+const root=path.resolve(__dirname,'../..'),html=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
+function decoded(key){return Buffer.from(html.match(new RegExp('\\b'+key+'=b64utf8\\("([^\"]+)"\\)'))[1],'base64').toString('utf8');}
+const shell={};vm.createContext(shell);vm.runInContext(html.slice(html.indexOf('  function nagApplyLedgerRecoveryV256('),html.indexOf('\n  window.nagOpenLinkedInvoice')),shell);
+const ledger=shell.nagApplyCustomerLedgerEditDeleteV224(shell.nagApplyLedgerRecoveryV256(decoded('LEDGER'),'Customer Ledger'),'Customer Ledger');
+const invoice={no:'INV-1031',date:'2026-11-01',time:'8:00 AM',c_name:'Nabd Al Gharb',c_addr:'Test company address',c_vat:'123456789',itype:'credit',paymentStatus:'pending',grand:57.5,stockSource:'main',rows:[{code:'TEST-SW',desc:'Test switch',qty:5,price:10}]};
+const data={customers:[{id:'nasir',name:'Nasir Bagali'},{id:'company',name:'Nabd Al Gharb'}],entries:{nasir:[{id:'wrong',date:'2026-10-20',invoiceNo:'INV-1031',bill:57.5,recv:0},{id:'cash',date:'2026-10-29',receiptNo:'CR-0059',bill:0,recv:10}],company:[{id:'right',date:invoice.date,invoiceNo:invoice.no,bill:invoice.grand,recv:0}]},settings:{}};
+const nav='var INV="test-invoice-module";'+html.match(/  window\.nagOpenLinkedInvoice=function[^\n]+/)[0];
+const setup='<script>window.confirm=function(){return true;};window.alert=function(){};window.addEventListener("error",function(e){try{parent.__errors.push(e.message);}catch(_){}});</script>';
+function documentHTML(doc){return doc.replace('<head>','<head>'+setup);}
+const fixture='<!doctype html><script src="/invoice-customer-links.js"></script><script>window.__errors=[];window.nagSession={u:"admin",n:"Admin",role:"admin"};localStorage.clear();localStorage.setItem("nag_ledger_v1",'+JSON.stringify(JSON.stringify(data))+');localStorage.setItem("nag_invoice_history_v1",'+JSON.stringify(JSON.stringify([invoice]))+');localStorage.setItem("nag_users",JSON.stringify([{u:"admin",role:"admin"}]));function openTool(doc,label){document.getElementById("frame").src="/invoice";}'+nav+'</script><iframe id="frame" src="/ledger" style="width:100%;height:95vh;border:0"></iframe>';
+const server=http.createServer((req,res)=>{res.setHeader('Content-Type','text/html; charset=utf-8');if(req.url==='/fixture')res.end(fixture);else if(req.url==='/ledger')res.end(documentHTML(ledger));else if(req.url==='/invoice')res.end(documentHTML(decoded('INV')));else if(req.url==='/invoice-customer-links.js'){res.setHeader('Content-Type','application/javascript');res.end(fs.readFileSync(path.join(root,'dist/invoice-customer-links.js')));}else{res.statusCode=404;res.end();}});
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+async function listen(s){await new Promise(r=>s.listen(0,'127.0.0.1',r));return s.address().port;}
+let edge,ws;
+const deadline=setTimeout(()=>{console.error('Browser verification exceeded its time limit.');if(ws)ws.close();if(edge)edge.kill();server.closeAllConnections();server.close();process.exit(1);},55000);
+(async()=>{
+  const port=await listen(server),probe=http.createServer(),debug=await listen(probe);await new Promise(r=>probe.close(r));
+  console.log('Isolated fixture server ready.');
+  const profile=fs.mkdtempSync(path.join(os.tmpdir(),'nabd-v225-browser-'));
+  edge=cp.spawn('C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',['--headless','--disable-gpu','--no-first-run','--no-default-browser-check','--remote-debugging-port='+debug,'--user-data-dir='+profile,'about:blank'],{windowsHide:true,stdio:'ignore'});
+  console.log('Test browser launch requested.');
+  let target;for(let i=0;i<20;i++){try{const list=await (await fetch('http://127.0.0.1:'+debug+'/json',{signal:AbortSignal.timeout(1000)})).json();target=list.find(x=>x.type==='page');if(target)break;}catch(e){}await pause(100);}
+  if(!target)throw Error('Isolated browser did not start');
+  ws=new WebSocket(target.webSocketDebuggerUrl);await Promise.race([new Promise((r,j)=>{ws.onopen=r;ws.onerror=j;}),pause(5000).then(()=>{throw Error('Browser connection timed out');})]);console.log('Browser connected.');
+  let id=0;const pending=new Map();ws.onmessage=e=>{const m=JSON.parse(e.data);if(m.id&&pending.has(m.id)){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(Error(m.error.message)):p.resolve(m.result);}};
+  function cdp(method,params={}){return new Promise((resolve,reject)=>{const n=++id;pending.set(n,{resolve,reject});ws.send(JSON.stringify({id:n,method,params}));});}
+  async function evaluate(expression){const r=await cdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.text+' '+JSON.stringify(r.exceptionDetails.exception));return r.result.value;}
+  async function waitFor(expression){for(let i=0;i<100;i++){try{if(await evaluate(expression))return;}catch(e){}await pause(100);}throw Error('Browser timeout: '+expression+' Errors: '+JSON.stringify(await evaluate('window.__errors')));}
+  await cdp('Network.enable');await cdp('Network.setBlockedURLs',{urls:['https://*']});await cdp('Page.enable');await cdp('Page.navigate',{url:'http://127.0.0.1:'+port+'/fixture'});
+  await waitFor('document.getElementById("frame")?.contentDocument?.getElementById("custSearch")');
+  await evaluate('(()=>{const d=document.getElementById("frame").contentDocument,x=d.getElementById("custSearch");x.value="Nasir";x.dispatchEvent(new Event("input",{bubbles:true}));d.querySelector("[data-pick]").click();})()');
+  await waitFor('document.getElementById("frame").contentDocument.querySelector("#ledgerRows tr td:nth-child(2) button")');
+  await evaluate('document.getElementById("frame").contentDocument.querySelector("#ledgerRows tr td:nth-child(2) button").click()');
+  await waitFor('document.getElementById("frame").contentDocument.querySelector("dialog[open]")');
+  assert.match(await evaluate('document.getElementById("frame").contentDocument.querySelector("dialog").textContent'),/Nabd Al Gharb/);
+  await evaluate('[...document.getElementById("frame").contentDocument.querySelectorAll("dialog button")].find(b=>b.textContent==="Correct customer link").click()');
+  const corrected=await evaluate('JSON.parse(localStorage.getItem("nag_ledger_v1"))');assert.equal(corrected.entries.nasir.length,1);assert.equal(corrected.entries.company.length,1);assert.equal(corrected.entries.company[0].bill,57.5);console.log('PASS browser: review and correction preserve the right customer bill and receipt');
+  await evaluate('(()=>{const d=document.getElementById("frame").contentDocument,x=d.getElementById("custSearch");x.value="Nabd";x.dispatchEvent(new Event("input",{bubbles:true}));d.querySelector("[data-pick]").click();d.querySelector("#ledgerRows tr td:nth-child(2) button").click();[...d.querySelectorAll("dialog button")].find(b=>b.textContent==="Open saved invoice").click();})()');
+  await waitFor('document.getElementById("frame").contentDocument.getElementById("c_name")?.value==="Nabd Al Gharb"');
+  assert.equal(await evaluate('document.getElementById("frame").contentDocument.getElementById("c_addr").value'),'Test company address');
+  await evaluate('(()=>{const d=document.getElementById("frame").contentDocument;[...d.querySelectorAll("button")].find(b=>b.textContent.includes("Previous Invoices")).click();[...d.querySelectorAll("#histRows button")].find(b=>b.textContent==="Copy as New Invoice").click();})()');
+  assert.equal(await evaluate('document.getElementById("frame").contentDocument.getElementById("inv_no").value'),'INV-1032');
+  assert.equal(await evaluate('document.getElementById("frame").contentDocument.querySelector("#rows .f-code").value'),'TEST-SW');
+  assert.equal((await evaluate('JSON.parse(localStorage.getItem("nag_invoice_history_v1"))')).length,1);
+  assert.equal((await evaluate('JSON.parse(localStorage.getItem("nag_ledger_v1"))')).entries.company.length,1);console.log('PASS browser: linked invoice opens with its address; copying keeps products and does not save a bill');
+  const shot=await cdp('Page.captureScreenshot',{format:'png'});const screenshot=path.resolve(root,'../desktop_v225_browser_review.png');fs.writeFileSync(screenshot,Buffer.from(shot.data,'base64'));console.log('Screenshot: '+screenshot);console.log('Browser errors: '+JSON.stringify(await evaluate('window.__errors')));
+})().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{clearTimeout(deadline);if(ws)ws.close();if(edge)edge.kill();server.closeAllConnections();server.close();});

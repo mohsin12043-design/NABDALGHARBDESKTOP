@@ -36,19 +36,20 @@
   var nagOriginalPushLedgerEntry=pushLedgerEntry;
   pushLedgerEntry=function(cid,entry){
     if(!nagSavingInvoice)return nagOriginalPushLedgerEntry(cid,entry);
-    var d=loadLedgerData();nagLinks.backup(localStorage,d);
+    var d=loadLedgerData(),removed=[];nagLinks.backup(localStorage,d);
     Object.keys(d.entries).forEach(function(id){
       d.entries[id]=(d.entries[id]||[]).filter(function(e){
         if(e.receiptNo||Number(e.bill)<=0)return true;
-        if(e.invoice_uid)return e.invoice_uid!==nagSavingInvoice.invoice_uid;
+        if(e.invoice_uid){if(e.invoice_uid===nagSavingInvoice.invoice_uid){removed.push({from:id,entry:e});return false;}return true;}
         var oldCustomer=nagEditingInvoice&&nagLinks.targetCustomer(d,nagEditingInvoice);
-        return !(oldCustomer&&oldCustomer.id===id&&nagLinks.entryRecord(e,[nagEditingInvoice]));
+        if(oldCustomer&&oldCustomer.id===id&&nagLinks.entryRecord(e,[nagEditingInvoice])){removed.push({from:id,entry:e});return false;}return true;
       });
     });
     persistLedgerData(d);
     entry.invoice_uid=nagSavingInvoice.invoice_uid;entry.customer_id=cid;entry.customer_name=nagSavingInvoice.c_name;
     entry.source='tax_invoice';entry.updated_at=new Date().toISOString();nagBridgeMark(entry);
-    var target=d.entries[cid]||(d.entries[cid]=[]);entry.id='e_'+nagSavingInvoice.invoice_uid;entry.seq=target.length;target.push(entry);persistLedgerData(d);
+    var target=d.entries[cid]||(d.entries[cid]=[]);entry.id='e_'+nagSavingInvoice.invoice_uid;entry.seq=target.length;target.push(entry);
+    removed.forEach(function(old){if(!old.entry.invoice_uid||old.from!==cid)nagLinks.correct(d,old.from,old.entry,cid,nagSavingInvoice);});persistLedgerData(d);
   };
   var nagOriginalSaveInvoiceHistory=saveInvoiceHistory;
   saveInvoiceHistory=function(t){

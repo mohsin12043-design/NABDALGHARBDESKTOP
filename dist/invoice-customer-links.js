@@ -16,7 +16,10 @@
   function mergeHistory(a,b){
     var out=[];
     [a,b].forEach(function(list){(Array.isArray(list)?list:[]).forEach(function(r){
-      var i=out.findIndex(function(x){return (x.invoice_uid&&r.invoice_uid)?x.invoice_uid===r.invoice_uid:fingerprint(x)===fingerprint(r);});
+      var i=out.findIndex(function(x){
+        if(r.legacy_invoice_token===token(x)||x.legacy_invoice_token===token(r)||(x.legacy_invoice_token&&x.legacy_invoice_token===r.legacy_invoice_token))return true;
+        return (x.invoice_uid&&r.invoice_uid)?x.invoice_uid===r.invoice_uid:fingerprint(x)===fingerprint(r);
+      });
       if(i<0)out.push(r);else out[i]=Object.assign({},time(r)>=time(out[i])?out[i]:r,time(r)>=time(out[i])?r:out[i]);
     });});
     return out;
@@ -53,15 +56,19 @@
       var kept=[];
       (d.entries[cid]||[]).forEach(function(e){
         if(!number(e)||Number(e.bill)<=0||e.receiptNo){kept.push(e);return;}
-        var correction=moves(d).find(function(m){return m.from===cid&&m.snapshot===rowKey(e);});
-        var rec=entryRecord(e,history),target=correction?d.customers.find(function(c){return c.id===correction.to&&!c.deleted_at;}):rec&&targetCustomer(d,rec);
+        var currentCustomer=d.customers.find(function(c){return c.id===cid;});
+        var correction=moves(d).find(function(m){return (m.from===cid||(m.from_name&&currentCustomer&&name(m.from_name)===name(currentCustomer.name)))&&m.snapshot===rowKey(e);});
+        var rec=entryRecord(e,history),target=correction?d.customers.find(function(c){return !c.deleted_at&&(c.id===correction.to||(correction.to_name&&name(c.name)===name(correction.to_name)));}):rec&&targetCustomer(d,rec);
         if(!correction&&!e.invoice_uid&&(!e.customer_name||!rec||name(e.customer_name)!==name(customerName(rec)))){kept.push(e);return;}
-        if(!target||target.id===cid){kept.push(e);return;}
+        if(!target){kept.push(e);return;}
         if(correction&&correction.mode==='unlink_duplicate'){
           var existing=d.entries[target.id]||(d.entries[target.id]=[]);
-          if(!existing.some(function(x){return rowKey(x)===rowKey(correction.target_entry)||(x.invoice_uid&&x.invoice_uid===correction.target_entry.invoice_uid);}))existing.push(Object.assign({},correction.target_entry));
+          if(!existing.some(function(x){return rowKey(x)===rowKey(correction.target_entry)||(x.invoice_uid&&x.invoice_uid===correction.target_entry.invoice_uid);})){
+            if(target.id===cid)kept.push(Object.assign({},correction.target_entry));else existing.push(Object.assign({},correction.target_entry));
+          }
           return;
         }
+        if(target.id===cid){kept.push(e);return;}
         var moved=Object.assign({},e,{customer_id:target.id,customer_name:target.name,invoice_link_verified:true});
         if(correction)moved.invoice_link_token=correction.invoice_token;
         if(rec&&rec.invoice_uid)moved.invoice_uid=rec.invoice_uid;
@@ -90,7 +97,8 @@
     if(!target)throw Error('The invoice customer is not available in Customer Ledger.');
     d.settings=d.settings||{};
     var duplicate=duplicateTarget(d,to,rec);
-    var m={id:from+'|'+rowKey(e),from:from,to:to,snapshot:rowKey(e),invoice_token:token(rec),original_entry:Object.assign({},e),mode:duplicate?'unlink_duplicate':'move',target_entry:duplicate?Object.assign({},duplicate):null,updated_at:new Date().toISOString()};
+    var source=d.customers.find(function(c){return c.id===from;});
+    var m={id:from+'|'+rowKey(e),from:from,from_name:source?source.name:'',to:to,to_name:target.name,snapshot:rowKey(e),invoice_token:token(rec),original_entry:Object.assign({},e),mode:duplicate?'unlink_duplicate':'move',target_entry:duplicate?Object.assign({},duplicate):null,updated_at:new Date().toISOString()};
     d.settings.invoice_link_moves_v225=mergeMoves(moves(d),[m]);
     return reconcile(d,[]);
   }

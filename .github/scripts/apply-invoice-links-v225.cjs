@@ -14,7 +14,7 @@ function moduleDoc(key,patch){
   const re=new RegExp('\\b'+key+'=b64utf8\\("([^\"]+)"\\)');
   const match=html.match(re);if(!match)throw Error('Missing module '+key);
   const before=Buffer.from(match[1],'base64').toString('utf8');
-  const after=patch(before).replace(/\s+$/, '\n');
+  const after=patch(before).replace(/\s*$/, '\n');
   html=html.replace(re,key+'=b64utf8("'+Buffer.from(after,'utf8').toString('base64')+'")');
 }
 if(html.includes('id="nag-invoice-customer-links-v225"')){
@@ -26,6 +26,7 @@ if(html.includes('id="nag-invoice-customer-links-v225"')){
     const fragment=fs.readFileSync(path.join(__dirname,'fragments/'+(key==='INV'?'invoice':'ledger')+'-links-runtime.js'),'utf8');
     doc=doc.slice(0,start)+fragment+'\n'+doc.slice(end);
     if(key==='INV')doc=doc.replace("nextNumber(localStorage.getItem(IKEY),loadHistory(),loadLedgerData())","nextNumber(localStorage.getItem(IKEY),window.parent.NagInvoiceLinks.read(localStorage,'nag_invoice_history_v1',[]),loadLedgerData())");
+    if(key==='INV'&&!doc.includes('rec.legacy_invoice_token='))doc=doc.replace('rec.invoice_uid=nagDraftInvoiceUID;',"rec.invoice_uid=nagDraftInvoiceUID;rec.legacy_invoice_token=nagEditingInvoice?(nagEditingInvoice.legacy_invoice_token||(!nagEditingInvoice.invoice_uid?nagLinks.token(nagEditingInvoice):'')):'';");
     return doc;
   });
   const oldNav="window.nagOpenLinkedInvoice=function(token,copy){window.__nagLinkedInvoiceRequest={token:token,copy:!!copy};openTool(INV,'Tax Invoice');};";
@@ -66,9 +67,11 @@ if(html.includes('id="nag-invoice-customer-links-v225"')){
   console.log('Applied desktop invoice/customer link patch v225.');
 }
 // Refresh generated host hooks as well as the decoded module fragments.
+moduleDoc('INV',function(doc){return doc.includes('rec.legacy_invoice_token=')?doc:doc.replace('rec.invoice_uid=nagDraftInvoiceUID;',"rec.invoice_uid=nagDraftInvoiceUID;rec.legacy_invoice_token=nagEditingInvoice?(nagEditingInvoice.legacy_invoice_token||(!nagEditingInvoice.invoice_uid?nagLinks.token(nagEditingInvoice):'')):'';");});
 html=html.replace("invoice_uid:r.invoice_uid||'',customer_id:c&&c.id","invoice_uid:r.invoice_uid||'',invoice_link_token:window.parent.NagInvoiceLinks.token(r),customer_id:c&&c.id");
 html=html.replace('return x.invoice_uid&&e.invoice_uid?x.invoice_uid===e.invoice_uid:sig(x)===k','return x.invoice_link_token&&e.invoice_link_token?x.invoice_link_token===e.invoice_link_token:x.invoice_uid&&e.invoice_uid?x.invoice_uid===e.invoice_uid:sig(x)===k');
 html=html.replace('});return window.NagInvoiceLinks.mergeLedger(out,local,cloud',"});window.NagInvoiceLinks.backup(localStorage,local);return window.NagInvoiceLinks.mergeLedger(out,local,cloud");
 html=html.replace('"d=window.parent.NagInvoiceLinks.reconcile(d,arr(', '"window.parent.NagInvoiceLinks.backup(localStorage,d);d=window.parent.NagInvoiceLinks.reconcile(d,arr(');
+html=html.replace("function nagCloudEntryId(e,index){e=e||{};var inv=","function nagCloudEntryId(e,index){e=e||{};if(e.invoice_uid)return 'invoice_uid|'+e.invoice_uid;var inv=");
 if(!html.includes('patch=patch.replace("if(old)Object.keys(e)"'))html=html.replace("    patch=patch.replace(\"if(!c){c={id:'cloud_c_'\"",'    patch=patch.replace("if(old)Object.keys(e)","if(old&&old.invoice_link_verified)return;if(old)Object.keys(e)");\n'+"    patch=patch.replace(\"if(!c){c={id:'cloud_c_'\"");
 fs.writeFileSync(file,html,'utf8');
