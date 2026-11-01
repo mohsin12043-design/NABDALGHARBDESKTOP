@@ -1,0 +1,17 @@
+  function nagApplyCustomerLedgerEditDeleteV224(doc,label){
+    if(label!=='Customer Ledger'||String(doc||'').indexOf('NAG_CUSTOMER_LEDGER_EDIT_DELETE_V224')>=0)return doc;
+    var source=String(doc||''),replacements=[
+      ["if(c){c.name=name;c.mobile=mobile;c.vat=vat;c.address=address;c.nationalAddress=nationalAddress;c.creditLimit=creditLimit;nagMarkOwner(c);}","if(c){c.name=name;c.mobile=mobile;c.vat=vat;c.address=address;c.nationalAddress=nationalAddress;c.creditLimit=creditLimit;c.deleted_at=false;c.updated_at=new Date().toISOString();nagMarkOwner(c);}"],
+      ["var id=uid();\n      data.customers.push(nagMarkOwner({id:id,name:name,mobile:mobile,vat:vat,address:address,nationalAddress:nationalAddress,creditLimit:creditLimit}));","var id=uid(),now=new Date().toISOString(),existing=data.customers.find(function(x){return x.deleted_at&&String(x.name||'').trim().toLowerCase()===name.toLowerCase()&&(!mobile||!x.mobile||String(x.mobile)===mobile);});\n      if(existing){id=existing.id;existing.name=name;existing.mobile=mobile;existing.vat=vat;existing.address=address;existing.nationalAddress=nationalAddress;existing.creditLimit=creditLimit;existing.deleted_at=false;existing.updated_at=now;nagMarkOwner(existing);}else data.customers.push(nagMarkOwner({id:id,name:name,mobile:mobile,vat:vat,address:address,nationalAddress:nationalAddress,creditLimit:creditLimit,deleted_at:false,updated_at:now}));"],
+      ["data.customers=data.customers.filter(function(x){return x.id!==currentCustId;});\n    delete data.entries[currentCustId];","c.deleted_at=new Date().toISOString();c.updated_at=c.deleted_at;\n    data.entries[currentCustId]=[];"],
+      ["var c=data.customers.find(function(x){return x.id===id;});\n    if(!c)return;","var c=data.customers.find(function(x){return x.id===id&&!x.deleted_at;});\n    if(!c)return;"],
+      ["var list=data.customers.filter(function(c){return !q||(c.name||'').toLowerCase().indexOf(q)>=0||(c.mobile||'').indexOf(q)>=0||String(c.vat||c.vatNumber||'').toLowerCase().indexOf(q)>=0||String(c.nationalAddress||c.national_address||c.natl||'').toLowerCase().indexOf(q)>=0;});","var list=data.customers.filter(function(c){return !c.deleted_at&&(!q||(c.name||'').toLowerCase().indexOf(q)>=0||(c.mobile||'').indexOf(q)>=0||String(c.vat||c.vatNumber||'').toLowerCase().indexOf(q)>=0||String(c.nationalAddress||c.national_address||c.natl||'').toLowerCase().indexOf(q)>=0);});"],
+      ["var m=data.customers.filter(function(c){return (c.name||'').toLowerCase().indexOf(q)>=0||","var m=data.customers.filter(function(c){return !c.deleted_at&&((c.name||'').toLowerCase().indexOf(q)>=0||"],
+      ["String(c.nationalAddress||c.national_address||c.natl||'').toLowerCase().indexOf(q)>=0;}).slice(0,8);","String(c.nationalAddress||c.national_address||c.natl||'').toLowerCase().indexOf(q)>=0);}).slice(0,8);"],
+      ["$('ccount').textContent=data.customers.length;","$('ccount').textContent=data.customers.filter(function(c){return !c.deleted_at;}).length;"]
+    ];
+    for(var i=0;i<replacements.length;i++){var from=replacements[i][0],to=replacements[i][1];if(source.indexOf(from)<0)throw new Error('Customer Ledger patch target missing: '+i);source=source.replace(from,to);}
+    source=source.replace("if(!c){c={id:'cloud_c_'","if(c&&c.deleted_at)return null;if(!c){c={id:'cloud_c_'");
+    source=source.replace('</head>','<!-- NAG_CUSTOMER_LEDGER_EDIT_DELETE_V224 --></head>');
+    return source;
+  }

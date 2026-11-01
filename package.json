@@ -1,6 +1,6 @@
 {
   "name": "nabd-al-gharb-desktop",
-  "version": "2.2.3",
+  "version": "2.2.5",
   "private": true,
   "scripts": {
     "tauri": "tauri"

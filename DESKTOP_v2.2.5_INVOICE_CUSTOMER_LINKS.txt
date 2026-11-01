@@ -1,0 +1,31 @@
+Desktop v2.2.5: invoice customer links
+
+Customer Ledger invoice numbers open a review showing the saved invoice customer,
+date and amount. Admin can correct a wrong customer link after reviewing it.
+If the invoice already exists under the right customer, the extra wrong link is
+removed without adding a second bill. A backup and the original entry are kept.
+
+Invoice history has Open and Copy as New Invoice. Copy loads the products and
+customer details with a new number and today's date. It does not post another
+bill or change stock until normal PDF/Print saving occurs.
+
+New numbers consider known synced history, existing ledger references and the
+device counter. New saved invoices carry an immutable reference and customer ID.
+Existing records with a conflicting number are preserved instead of overwritten.
+Simultaneous offline creation on older app versions can still create collisions;
+those historical cases need review instead of guessing a customer or amount.
+
+For INV-1031, open Nasir Bagali's ledger, click INV-1031, compare the saved Nabd Al
+Gharb invoice, and choose Correct customer link. The app asks for confirmation.
+Because the screenshots show different dates, this version does not silently
+rewrite your live financial data. No production database changes were performed.
+
+Development build preparation, in order:
+node .github/scripts/bootstrap-desktop-v224.cjs
+pwsh -File .github/scripts/fix-tax-invoice-history-sort.ps1
+node .github/scripts/apply-invoice-links-v225.cjs
+node .github/scripts/test-invoice-links-v225.cjs
+npm install
+npm run tauri -- build
+
+The downloadable source ZIP already contains the prepared dist files.
