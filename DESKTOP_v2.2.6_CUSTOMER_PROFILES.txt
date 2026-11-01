@@ -1,0 +1,32 @@
+Desktop v2.2.6: customer VAT, address and mobile isolation
+
+Changing the selected customer in Tax Invoice replaces VAT, mobile, address and
+national address with that customer's own saved details. Unknown customers start
+with empty details. Cash Receipt also clears the previous customer's mobile.
+
+Existing customer profiles are edited in Customer Ledger. Invoice and receipt
+history no longer fills or modifies an existing customer's details. An explicit
+blank saved in Customer Ledger remains blank when older cloud data is merged.
+Each explicit profile edit is saved as a complete version of that customer's
+details. Different names sharing a legacy ID are separated instead of merged.
+
+Previously stored wrong details cannot be inferred from the displayed invoice.
+Open the affected customer in Customer Ledger, choose Edit, enter the verified
+VAT/address (or clear fields that should be empty), and Save once in this version.
+No production records or database schema were changed while developing this fix.
+
+The invoice-link review and Copy as New Invoice features from v2.2.5 are preserved.
+The only embedded modules changed in v2.2.6 are the customer details paths in
+Tax Invoice, Cash Receipt and Customer Ledger, plus their shared merge logic.
+
+Build preparation:
+node .github/scripts/bootstrap-desktop-v224.cjs
+pwsh -File .github/scripts/fix-tax-invoice-history-sort.ps1
+node .github/scripts/apply-invoice-links-v225.cjs
+node .github/scripts/apply-customer-profiles-v226.cjs
+node .github/scripts/test-invoice-links-v225.cjs
+node .github/scripts/test-customer-profiles-v226.cjs
+npm install
+npm run tauri -- build
+
+The source ZIP already contains the prepared dist files.
