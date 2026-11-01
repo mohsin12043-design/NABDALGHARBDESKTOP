@@ -1,6 +1,6 @@
   /* NAG_INVOICE_LINKS_V225 */
   var nagLinks=window.parent.NagInvoiceLinks;
-  var nagEditingInvoice=null,nagDraftInvoiceUID=nagLinks.uid(),nagSavingInvoice=null;
+  var nagEditingInvoice=null,nagDraftInvoiceUID=nagLinks.uid(),nagSavingInvoice=null,nagLinkNeedsStockSelection=false;
   var nagOriginalAssignNewInv=assignNewInv;
   assignNewInv=function(){
     nagEditingInvoice=null;nagDraftInvoiceUID=nagLinks.uid();
@@ -16,17 +16,18 @@
     if(!rec){setStatus('Invoice number is missing or belongs to multiple saved invoices. Select the exact invoice in Previous Invoices.','err');return false;}
     nagEditingInvoice=rec;nagDraftInvoiceUID=rec.invoice_uid||nagLinks.uid();
     nagOriginalOpenHistoryInvoice(nagLinks.actionToken(rec));
-    var source=$('saleSource');
+    var source=$('saleSource');nagLinkNeedsStockSelection=false;
     if(source){var wanted=rec.stockSource==='vehicle'?'vehicle:'+rec.vehicleId:(rec.stockSource==='mini_store'?'mini:'+rec.miniStoreId:'main');
       var exists=Array.prototype.some.call(source.options,function(o){return o.value===wanted;});
       if(exists){source.value=wanted;if(source.onchange)source.onchange();}
-      else if(wanted!=='main'){setStatus('The original stock location is unavailable. Select an allowed stock location before saving.','err');source.value='';}
+      else if(wanted!=='main'){setStatus('The original stock location is unavailable. Select an allowed stock location before saving.','err');source.value='';nagLinkNeedsStockSelection=true;source.addEventListener('change',function(){nagLinkNeedsStockSelection=false;},{once:true});}
     }
     return true;
   };
   function nagCopyInvoice(value){if(openHistoryInvoice(value)){assignNewInv();return true;}return false;}
   var nagOriginalBuildInvoicePDF=buildInvoicePDF;
   buildInvoicePDF=function(){
+    if(nagLinkNeedsStockSelection){setStatus('Select an allowed stock location before saving this invoice.','err');return Promise.reject('stock-location-unavailable');}
     var history=loadHistory(),same=history.filter(function(r){return r.no===$('inv_no').value;});
     var editing=nagEditingInvoice&&same.some(function(r){return nagLinks.token(r)===nagLinks.token(nagEditingInvoice);});
     if(!editing&&same.length){assignNewInv();}
